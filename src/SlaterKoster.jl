@@ -11,8 +11,17 @@ module SlaterKoster
 #  (4) fast evaluation
 #  (5) fast derivatives
 
-
 # my old codes from the previous TB package
 include("oldsk.jl")
+
+# define non-local types and functions
+include("prototypes.jl")
+
+# evaluate the SK blocks
+include("skcore.jl")
+
+# hamiltonian matrix assembly
+include("matrixassembly.jl")
+
 
 end # module

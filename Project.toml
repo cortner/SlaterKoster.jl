@@ -3,6 +3,9 @@ uuid = "3e89296e-80c1-11e9-322a-19e3767ae6cc"
 version = "0.1.0"
 
 [deps]
+JuLIP = "945c410c-986d-556a-acb1-167a618e0462"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+NeighbourLists = "2fcf5ba9-9ed4-57cf-b73f-ff513e316b9c"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [extras]
