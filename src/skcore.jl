@@ -33,7 +33,7 @@ sk!(out, H::SKHamiltonian{1}, U, bonds) = setindex!(out, bonds[1], 1)
 
 ######## sp-orbital model
 
-sk!(out, H::SKHamiltonian{4}, U, bonds) = OldSK._sk4!(U, bonds, out)
+sk!(out, H::SKHamiltonian{4}, U, bonds) = OldSK.sk4!(U, bonds, out)
 # sk_d!{IO}(H::SKHamiltonian{IO, 4}, r, R, b, db, dout) = _sk4_d!(R/r, r, b, db, dout)
 
 ######## spd-orbital model

@@ -1,5 +1,7 @@
 module SlaterKoster
 
+using Reexport
+
 # Functionality we need - by order of
 #  (1) correct s, p, d orbitals
 #      INPUT: U, hop -> OUTPUT: matrix
@@ -22,6 +24,10 @@ include("skcore.jl")
 
 # hamiltonian matrix assembly
 include("matrixassembly.jl")
+# exports: hamiltonian
 
+# Kwon model - primarily for testing...
+include("kwon.jl")
+@reexport using SlaterKoster.Kwon
 
 end # module

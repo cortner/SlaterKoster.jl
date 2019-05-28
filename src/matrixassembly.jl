@@ -2,10 +2,11 @@
 
 using StaticArrays
 
-using JuLIP: AbstractAtoms
-using NeighbourLists: sites
+using JuLIP: AbstractAtoms, positions, cutoff, neighbourlist
+using NeighbourLists: sites, npairs
+using LinearAlgebra: dot, diagind
 
-
+export hamiltonian
 
 """
 `indexblock`: auxiliary function to compute indices of Slater Koster orbitals,
@@ -15,6 +16,10 @@ heap memory is allocated.
 indexblock(n::Integer, H::SKHamiltonian{NORB}) where {NORB} =
    SVector{NORB, Int}( ((n-1)*NORB+1):(n*NORB) )
 
+ndofs(H::SKHamiltonian{NORB}, at::AbstractAtoms) where {NORB} =
+      ndofs(NORB, length(at))
+ndofs(norb::Integer, nat::Integer) =
+      norb * nat
 
 function SparseSKH(H::SKHamiltonian{NORB}, at::AbstractAtoms) where {NORB}
 
@@ -52,8 +57,8 @@ function SparseSKH(H::SKHamiltonian{NORB}, at::AbstractAtoms) where {NORB}
 
       # --------- on-site terms ----------
       # add the diagonal/on-site entries
-      onsite!(H, r, R, H_nm)
-      overlap!(H, r, R, M_nm)   # TODO: should this be just (H, M)
+      onsite!(H, r, R, H_nm, M_nm)
+      # onsite_overlap!(H, r, R, M_nm)   # TODO: should this be just (H, M)
       idx += 1
       i[idx], j[idx], vH[idx], vM[idx] = n, n, SKB(H_nm), SKB(M_nm)
       # Rvector corresponding to this block is just X[n]-X[n] = 0
@@ -63,8 +68,8 @@ function SparseSKH(H::SKHamiltonian{NORB}, at::AbstractAtoms) where {NORB}
       for m = 1:length(neigs)
          U = R[m]/r[m]
          # hamiltonian block; TODO: new framework plugs into here!!!! <<<<<<<<<< !!!!!!
-         sk!(H, U, hop!(H, r[m], bonds), H_nm)
-         sk!(H, U, overlap!(H, r[m], bonds), M_nm)
+         sk!(H_nm, H, U, hop!(H, r[m], bonds))
+         sk!(M_nm, H, U, overlap!(H, r[m], bonds))
          idx += 1
          i[idx], j[idx], vH[idx], vM[idx] = n, neigs[m], SKB(H_nm), SKB(M_nm)
          # compute the Rcell vector for these blocks
@@ -79,8 +84,8 @@ end
 _alloc_full(skh::SparseSKH) = _alloc_full(skh.H, skh.at)
 
 _alloc_full(H::SKHamiltonian, at::AbstractAtoms) =
-         ( Matrix{Complex128}(ndofs(H, at), ndofs(H, at)),
-           Matrix{Complex128}(ndofs(H, at), ndofs(H, at)) )
+         ( Matrix{ComplexF64}(undef, ndofs(H, at), ndofs(H, at)),
+           Matrix{ComplexF64}(undef, ndofs(H, at), ndofs(H, at)) )
 
 Base.Matrix(H::SparseSKH, k::AbstractVector = zero(JVecF)) =
          _full!(_alloc_full(H), H, k)
@@ -106,3 +111,7 @@ function _full!(Hout, Mout, skh, k, H::SKHamiltonian{NORB}) where {NORB}
    Mout[diagind(Mout)] = real(Mout[diagind(Mout)])
    return Hout, Mout
 end
+
+
+hamiltonian(H::SKHamiltonian, at::AbstractAtoms, k = zero(JVecF)) =
+            Hermitian.(Matrix(SparseSKH(H, at), k))

@@ -1,6 +1,6 @@
 using StaticArrays
 
-using JuLIP: AbstractAtoms, JVecF 
+using JuLIP: AbstractAtoms, JVecF
 
 """
 `abstract type SKHamiltonian{NORB}` : supertype for Hamiltonian
@@ -18,12 +18,18 @@ nbonds(::SKHamiltonian{1}) = 1
 nbonds(::SKHamiltonian{4}) = 4
 nbonds(::SKHamiltonian{9}) = 10
 
+"""
+`isorthogonal(H) -> Bool` : specify whether the tb model is orthogonal
+or non-orthogonal (has non-trivial overlap). Default is `false`.
+"""
+isorthogonal(H::SKHamiltonian) = false
+
 
 """
 `hop(H::SKHamiltonian, r, i)`: where `r` is real, `i` integer, this
 should return the
 """
-hop
+function hop end
 
 # TODO: we don't know yet what this means!
 # hop_d(H::SKHamiltonian, r, i) = ForwardDiff.derivative(s -> hop(H,s,i), r)
@@ -79,9 +85,8 @@ end
 # rewrite onsite! as diagonals???
 # but we don't provide AD for these since they depend on too many variables,
 # so AD will necessarily be inefficient.
-# function onsite! end
+function onsite! end
 # function onsite_grad! end
-
 
 
 # Matrix Assembly
