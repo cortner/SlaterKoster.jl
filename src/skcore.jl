@@ -1,5 +1,7 @@
 using StaticArrays
 
+using SlaterKoster.CodeGeneration: sk_gen!
+
 ########################################################################
 ######## Interface for computing SK Blocks     #########################
 ########################################################################
@@ -44,3 +46,40 @@ sk!(out, H::SKHamiltonian{9}, U, bonds) = OldSK._sk9!(U, bonds, out)
 
 
 ########################################################################
+
+
+norb2L(::Val{1}) = Val(0)    # s
+norb2L(::Val{4}) = Val(1)    # p
+norb2L(::Val{9}) = Val(2)    # d
+norb2L(::Val{16}) =Val(3)    # f
+
+sk!(out, H::SKHamiltonian{NORB}, U, bonds) where {NORB} =
+            _sk!(out, norb2L(Val{NORB}()), U, bonds)
+
+function _sk!(out, valL::Val{L}, U, V) where {L}
+   φ, θ = carttospher(U[1], U[2], U[3])
+   return sk_gen!(out, valL, V, φ, θ)
+end
+
+
+# this assumes that the coordinates are normalised
+# TODO: α=φ, β=θ
+"""
+INPUTS: (x,y,z): This represents a position vector which is given using Cartesian coordinates.
+RETURNS: The corresponding polar coordinates - radial, azimuthal, polar.
+"""
+function carttospher(x,y,z)
+   β = arccos(z)
+   if x != 0
+      α = arctan2(y,x)
+   else
+      if y > 0
+         α = π/2
+      elseif y < 0
+         α = - π/2
+      else
+         α = 0.0
+      end
+   end
+   return α, β
+end

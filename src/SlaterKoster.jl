@@ -16,10 +16,13 @@ using Reexport
 # my old codes from the previous TB package
 include("oldsk.jl")
 
+include("basics.jl")
+
 # define non-local types and functions
 include("prototypes.jl")
 
 # evaluate the SK blocks
+include("code_generation.jl")
 include("skcore.jl")
 
 # hamiltonian matrix assembly
