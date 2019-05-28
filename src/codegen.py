@@ -23,6 +23,7 @@ def carttospher(x,y,z):
 
 def Gsym(l_1,l_2,m_1,m_2,M):
     alpha, beta = symbols('alpha, beta')
+    # s = signmatrix(l_1, l_2)[m_1+l_1, m_2+l_2]
     return str(G2(l_1, l_2, m_1, m_2, M, alpha, beta))
 
 

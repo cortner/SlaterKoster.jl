@@ -69,17 +69,11 @@ INPUTS: (x,y,z): This represents a position vector which is given using Cartesia
 RETURNS: The corresponding polar coordinates - radial, azimuthal, polar.
 """
 function carttospher(x,y,z)
-   β = arccos(z)
+   β = acos(z)
    if x != 0
-      α = arctan2(y,x)
+      α = atan(x, y) # atan2(y,x)
    else
-      if y > 0
-         α = π/2
-      elseif y < 0
-         α = - π/2
-      else
-         α = 0.0
-      end
+      α = sign(y) * π/2
    end
    return α, β
 end

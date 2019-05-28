@@ -14,6 +14,7 @@ function sk4!(U, hop, mat)
    l, m, n = U[1], U[2], U[3]
    # 4 orbitals are s, px, py, pz, these are the mat-indices
    # 4 bond types are : ssσ,spσ,ppσ,ppπ, these are the hop-indices
+   #                     1   2   3   4
    mat[1,1] = hop[1]                            # E_ss = V_ssσ
    mat[2,2] = l*l * hop[3] + (1-l*l) * hop[4]   # E_xx = l² V_ppσ + (1-l²) V_ppπ
    mat[3,3] = m*m * hop[3] + (1-m*m) * hop[4]   # E_yy = m² V_ppσ + (1-m²) V_ppπ
