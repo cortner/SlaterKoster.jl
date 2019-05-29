@@ -42,13 +42,28 @@ for l1 = 0:1, l2 = l1:1 # s,p,d
 end
 
 
-# joinpath(@__DIR__(), "..", "src")
-# using PyCall
-# pysys = pyimport("sys")
-# push!(pysys."path", joinpath(@__DIR__(), "..", "src"))
-# codegen = pyimport("codegen")
-# @show codegen.Gsym(1,1,0,0,0)
-# # ex = Meta.parse(replace(codegen.Gsym(1,1,0,0,0), "**" => "^"))
-# # ex1 = :( $ex + $ex )
-# # f = eval(:(beta -> $ex1))
-# # f(0.0)
+joinpath(@__DIR__(), "..", "src")
+using PyCall
+pysys = pyimport("sys")
+push!(pysys."path", joinpath(@__DIR__(), "..", "src"))
+codegen = pyimport("codegen")
+@show codegen.Gsym(1,1,0,0,0)
+# ex = Meta.parse(replace(codegen.Gsym(1,1,0,0,0), "**" => "^"))
+# ex1 = :( $ex + $ex )
+# f = eval(:(beta -> $ex1))
+# f(0.0)
+
+@show codegen.signmatrix(1,0)
+@show codegen.signmatrix(0,1)
+
+@show codegen.Gsym(0,1,0,-1,0)
+
+# V = rand(4) .- 0.5
+# U = rand(3) .- 0.5
+# U = U / norm(U)
+# Hold = zeros(4,4)
+# Hnew = zeros(4,4)
+# SK.OldSK.sk4!(U, V, Hold)
+# SK._sk!(Hnew, Val(1), U, V)
+# perm = [1,2,4,3]
+# @test Hold[perm, perm] ≈ Hnew

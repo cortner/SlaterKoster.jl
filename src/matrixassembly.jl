@@ -4,7 +4,7 @@ using StaticArrays
 
 using JuLIP: AbstractAtoms, positions, cutoff, neighbourlist
 using NeighbourLists: sites, npairs
-using LinearAlgebra: dot, diagind
+using LinearAlgebra: dot, diagind, Hermitian
 
 export hamiltonian
 
