@@ -71,7 +71,7 @@ RETURNS: The corresponding polar coordinates - radial, azimuthal, polar.
 function carttospher(x,y,z)
    β = acos(z)
    if x != 0
-      α = atan(x, y) # atan2(y,x)
+      α = atan(y, x)
    else
       α = sign(y) * π/2
    end

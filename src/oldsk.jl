@@ -46,7 +46,7 @@ hamiltonian, with 9 orbitals (s, p, d).
 """
 function sk9!(U, hop, mat)
    # fill the [1:4, 1:4] block
-   _sk4!(U, hop, mat)
+   sk4!(U, hop, mat)
    # and then all the rest
    l, m, n = U[1], U[2], U[3]
    # ll, mm, nn = l*l, m*m, n*n    # TODO: for faster evaluation???
