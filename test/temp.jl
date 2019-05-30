@@ -5,6 +5,8 @@ import SlaterKoster.CodeGeneration
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
 
+CG.sk_table(2)
+
 @show CG.Gsym(1, 0, 1, 0, 0)
 CG.Gsym(0,0,0,0,0)
 CG.Gsym(0,1,0,-1,0)

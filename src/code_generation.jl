@@ -2,8 +2,10 @@
 __precompile__(false)
 module CodeGeneration
 
-using PyCall, Calculus
+import JSON, Calculus
 
+using PyCall: pyimport
+using JuLIP: save_json
 using SlaterKoster: max_symbol, bondintegral_index, orbital_index
 
 
@@ -51,7 +53,35 @@ function Gsym_old(l_1, l_2, m_1, m_2, M::Integer)
    return str
 end
 
+_lookupkey(l1, l2, m1, m2, sym) = "$l1,$l2,$m1,$m2,$sym"
+_fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 
+function sk_table(L::Integer)
+   filepath = _fname_sktable()
+   try
+      tbl = JSON.parsefile(filepath)
+      if tbl["L"] < L
+         @info("""The existing lookup table does not contain a high enough degree.
+                  I'm now going to create a new one which can take a little while.""")
+      else
+         return tbl
+      end
+   catch
+      @info("""Reading SK lookup table was unsuccesful, I'm now going to create
+               a new one. This could take a while (O(minutes))""")
+   end
+
+   # create a new lookup table
+   norb = orbital_index(L, L)
+   tbl = Dict{String, Any}("L" => L)
+   for l1 = 0:L, l2=l1:L, m1=-l1:l1, m2=-l2:l2
+      for sym = 0:max_symbol(l1,l2)
+         tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym(l1,l2,m1,m2,sym)
+      end
+   end
+   save_json(filepath, tbl)
+   return tbl
+end
 
 """
 INPUTS: l_1: Angular quantum number of atom 1.
@@ -131,6 +161,8 @@ sksign(l1, l2) = (isodd(l1+l2) && (l1 > l2)) ? -1 : 1
 @generated function sk_gen!(g, ::Val{L}, V, φ, θ,
                             sgnconv::Type{SGN} = StandardSigns
                             ) where {L, SGN}
+   # get the SK expressions table
+   tbl = sk_table(L)
    code = Expr[]
    for l1 = 0:L, l2 = l1:L, m1 = -l1:l1, m2 = -l2:l2
       # matrix indices, skip the lower-triangular part
@@ -142,7 +174,8 @@ sksign(l1, l2) = (isodd(l1+l2) && (l1 > l2)) ? -1 : 1
       ex = "0.0"
       for sym = 0:max_symbol(l1, l2)
          # expression for the new entry
-         ex1 = Gsym(l1, l2, m1, m2, sym)
+         # ex1 = Gsym(l1, l2, m1, m2, sym)
+         ex1 = tbl[_lookupkey(l1,l2,m1,m2,sym)]
          # extression for the bond integral V
          V_idx = bondintegral_index(l1, l2, sym)
          ex = "$ex + ($ex1) * V[$V_idx]"
