@@ -132,12 +132,12 @@ sksign(l1, l2) = (isodd(l1+l2) && (l1 > l2)) ? -1 : 1
                             sgnconv::Type{SGN} = StandardSigns
                             ) where {L, SGN}
    code = Expr[]
-   for l1 = 0:L, l2 = 0:L, m1 = -l1:l1, m2 = -l2:l2
-      # matrix indices
+   for l1 = 0:L, l2 = l1:L, m1 = -l1:l1, m2 = -l2:l2
+      # matrix indices, skip the lower-triangular part
       I1 = orbital_index(l1, m1)
       I2 = orbital_index(l2, m2)
-      # sign modification (to do the FHI modification)
-      sig = sksign(l1, l2) * signmod(SGN)
+      if I2 < I1; continue; end
+
       # start assembling the expression for this matrix entry
       ex = "0.0"
       for sym = 0:max_symbol(l1, l2)
@@ -147,8 +147,15 @@ sksign(l1, l2) = (isodd(l1+l2) && (l1 > l2)) ? -1 : 1
          V_idx = bondintegral_index(l1, l2, sym)
          ex = "$ex + ($ex1) * V[$V_idx]"
       end
-      ex_assign = " g[$I1, $I2] = $sig * ($ex) "
+      ex_assign = " g[$I1, $I2] = $ex "
       push!(code, Calculus.simplify(Meta.parse(ex_assign)))
+
+      # symmetric part (if not on the diagonal)
+      if I2 != I1
+         # sign modification
+         sig = sksign(l2, l1) * signmod(SGN)
+         push!(code, :( g[$I2, $I1] = $sig * g[$I1, $I2] ))
+      end
    end
    quote
       $(Expr(:block, code...))
