@@ -26,14 +26,19 @@ for n = 1:10
    V = rand(10) .- 0.5
    U = rand(3) .- 0.5
    U = U / norm(U)
-   Hold = zeros(9,9)
-   Hnew = zeros(9,9)
-   SK.OldSK.sk9!(U, V, Hold)
-   SK._sk!(Hnew, Val(2), U, V)
+   Hold = SK.OldSK.sk9!(U, V, zeros(9,9))
+   Hnew = SK.sk(Hnew, Val(2), U, V)
    perm = [1,3,4,2,5,6,9,7,8]
    print((@test Hold[perm, perm] ≈ Hnew), " ")
    # @test sort(eigvals(Hold)) ≈ sort(eigvals(Hnew))
 end
 println()
+
+@info("test the FHI-aims format")
+set1 = JSON.parsefile(@__DIR__() * "/data/sp_o3_offsite_data.json"
+set2 = JSON.parsefile(@__DIR__() * "/data/spdf_au2_offsite_data.json"
+for set in (set1, set2)
+
+end
 
 end

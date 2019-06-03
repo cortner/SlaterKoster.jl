@@ -7,10 +7,15 @@ using SlaterKoster.CodeGeneration: sk_gen!
 ########################################################################
 
 """
-`sk(H, args...)` : allocating version of `sk!`
+* `sk(H, args...)`
+* `sk(NORB, args...)`
+allocating version of `sk!`
 """
 sk(H::SKHamiltonian{NORB}, args...) where {NORB} =
       sk!(zero(MMatrix{NORB,NORB,Float64}), H, args...)
+sk(norb::Integer, args...) = sk(Val(norb), args...)
+sk(val::Val{NORB}, args...) where {NORB} =
+      _sk!(zero(MMatrix{NORB,NORB,Float64}), val, args...)
 
 """
 `sk!(out, H, U, bonds)` : main method for assembling SK blocks

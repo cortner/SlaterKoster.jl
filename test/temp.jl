@@ -79,3 +79,13 @@ CG.sksign(0, 2)
 
 perm = [1,3,4,2,5,6,9,7,8]
 @test Hold[perm,perm] ≈ Hnew
+
+
+
+
+set1 = JSON.parsefile(@__DIR__() * "/data/sp_o3_offsite_data.json")
+@show set1["1"]["V"]
+display(hcat(set1["1"]["E"]...))
+
+set2 = JSON.parsefile(@__DIR__() * "/data/spdf_au2_offsite_data.json")
+@show set2["1"]["V"]
