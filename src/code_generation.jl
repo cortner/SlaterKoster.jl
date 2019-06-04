@@ -179,53 +179,53 @@ end
 
 
 
-"""
-Generate a Slater-Koster off-diagonal block with inputs being
-the bond integrals `V` and spherical coordinates `φ, θ`. The
-bond integral "types" are encoded in `Val{BONDS}`
-
-TODO: document the sign convention.
-"""
-@generated function sk_gen!(E, ::Val{BONDS}, V, φ, θ,
-                            sgnconv::Type{SGN} = StandardSigns
-                            ) where {L, SGN}
-   # compute the maximal L-degree
-   L = max_L(BONDS)
-   # get the SK expressions table
-   tbl = sk_table(L)
-   
-   code = Expr[]
-   for l1 = 0:L, l2 = l1:L, m1 = -l1:l1, m2 = -l2:l2
-      # matrix indices, skip the lower-triangular part
-      I1 = orbital_index(l1, m1)
-      I2 = orbital_index(l2, m2)
-      if I2 < I1; continue; end
-
-      # start assembling the expression for this matrix entry
-      ex = "0.0"
-      for sym = 0:max_symbol(l1, l2)
-         # expression for the new entry
-         # ex1 = Gsym(l1, l2, m1, m2, sym)
-         ex1 = tbl[_lookupkey(l1,l2,m1,m2,sym)]
-         # extression for the bond integral V
-         V_idx = bondintegral_index(l1, l2, sym)
-         ex = "$ex + ($ex1) * V[$V_idx]"
-      end
-      ex_assign = " E[$I1, $I2] = $ex "
-      push!(code, Calculus.simplify(Meta.parse(ex_assign)))
-
-      # symmetric part (if not on the diagonal)
-      if I2 != I1
-         # sign modification
-         sig = sksign(l2, l1) * signmod(SGN)
-         push!(code, :( E[$I2, $I1] = $sig * E[$I1, $I2] ))
-      end
-   end
-   quote
-      $(Expr(:block, code...))
-      return g
-   end
-end
+# """
+# Generate a Slater-Koster off-diagonal block with inputs being
+# the bond integrals `V` and spherical coordinates `φ, θ`. The
+# bond integral "types" are encoded in `Val{BONDS}`
+#
+# TODO: document the sign convention.
+# """
+# @generated function sk_gen!(E, ::Val{BONDS}, V, φ, θ,
+#                             sgnconv::Type{SGN} = StandardSigns
+#                             ) where {BONDS, SGN}
+#    # compute the maximal L-degree
+#    L = max_L(BONDS)
+#    # get the SK expressions table
+#    tbl = sk_table(L)
+#
+#    code = Expr[]
+#    for l1 = 0:L, l2 = l1:L, m1 = -l1:l1, m2 = -l2:l2
+#       # matrix indices, skip the lower-triangular part
+#       I1 = orbital_index(l1, m1)
+#       I2 = orbital_index(l2, m2)
+#       if I2 < I1; continue; end
+#
+#       # start assembling the expression for this matrix entry
+#       ex = "0.0"
+#       for sym = 0:max_symbol(l1, l2)
+#          # expression for the new entry
+#          # ex1 = Gsym(l1, l2, m1, m2, sym)
+#          ex1 = tbl[_lookupkey(l1,l2,m1,m2,sym)]
+#          # extression for the bond integral V
+#          V_idx = bondintegral_index(l1, l2, sym)
+#          ex = "$ex + ($ex1) * V[$V_idx]"
+#       end
+#       ex_assign = " E[$I1, $I2] = $ex "
+#       push!(code, Calculus.simplify(Meta.parse(ex_assign)))
+#
+#       # symmetric part (if not on the diagonal)
+#       if I2 != I1
+#          # sign modification
+#          sig = sksign(l2, l1) * signmod(SGN)
+#          push!(code, :( E[$I2, $I1] = $sig * E[$I1, $I2] ))
+#       end
+#    end
+#    quote
+#       $(Expr(:block, code...))
+#       return g
+#    end
+# end
 
 
 
