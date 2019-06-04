@@ -1,32 +1,31 @@
 
 @testset "SlaterKoster Basics" begin
 
-   using SlaterKoster: Orbital, parse_orbital
+   using  SlaterKoster, Test
+   using SlaterKoster:  get_l, get_bidx
 
-   @test parse_orbital("s") == Orbital(:s)
-
-
-end
-
-
-using  SlaterKoster, Test
-using SlaterKoster: Orbital, parse_orbital, get_sym, Bond, parse_bond
-
-function test_fail(f)
-   try
-      f()
-      @info("We should have thrown an error here")
-      return false
-   catch
-      return true
+   function test_fail(f)
+      try
+         f()
+         @info("We should have thrown an error here")
+         return false
+      catch
+         return true
+      end
    end
+
+   @info("Testing `get_l` for orbitals")
+   println(@test get_l(Val{:s}()) == 0)
+   println(@test get_l(Val{:p}()) == 1)
+   println(@test get_l(Val{:d}()) == 2)
+   println(@test get_l(Val{:f}()) == 3)
+   println(@test get_l(Val{:g}()) == 4)
+
+   @info("Testing `get_l, get_bidx` for bonds")
+   println(@test get_l(skb"spσ") == (0, 1))
+   println(@test get_bidx(skb"spσ") == 0)
+   println(@test get_l(skb"2p2pπ") == (1, 1))
+   println(@test get_bidx(skb"2p2pπ") == 1)
+   println(@test get_l(skb"1s2pσ") == (0,1))
+   println(@test get_bidx(skb"1s2pσ") == 0)
 end
-
-@test parse_orbital("s") == parse_orbital(:s)
-@test parse_orbital("2p") != parse_orbital(:_2p)
-@test test_fail( _ -> parse_orbital("d") == parse_orbital("3d"))
-@test test_fail( _ -> parse_orbital("x") )
-o = Orbital("3d")
-
-b = parse_bond("2s2pσ")
-@test
