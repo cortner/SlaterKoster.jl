@@ -25,8 +25,8 @@ include("skcore.jl")
 include("matrixassembly.jl")
 # exports: hamiltonian
 
-# Kwon model - primarily for testing...
-include("kwon.jl")
-@reexport using SlaterKoster.Kwon
+# Some basic models - mostly for testing?
+include("models.jl")
+# - Kwon TB
 
 end # module
