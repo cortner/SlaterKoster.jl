@@ -7,7 +7,7 @@ using StaticArrays
 
 using PyCall: pyimport
 using JuLIP: save_json
-using SlaterKoster: max_symbol_idx, bondintegral_index, orbital_index
+using SlaterKoster: max_symbol_idx
 using SlaterKoster: SKBond, get_l, get_bidx, StandardSigns, sksign, signmod
 
 # load the python part of the code generation
