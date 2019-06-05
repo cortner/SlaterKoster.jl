@@ -10,13 +10,13 @@ _bond_to_idx = Dict( :σ => 0, :π => 1, :δ => 2, :φ => 3, :γ => 5 )
 _orb_to_L = Dict( :s => 0, :p => 1, :d => 2, :f => 3, :g => 4 )
 
 _L_to_orb = Dict( [ val => key  for (key, val) in _orb_to_L ]... )
-_idx_2_bond = Dict( [ val => key for (key, val) in _bond_to_idx]... )
+_idx_to_bond = Dict( [ val => key for (key, val) in _bond_to_idx]... )
 
 
 orb_to_L(s::Union{Symbol, Char, AbstractString}) = _orb_to_L[Symbol(s)]
 bond_to_idx(s::Union{Symbol, Char, AbstractString}) = _bond_to_idx[String(s)]
 L_to_orb(i::Integer) = _L_to_orb[i]
-idx_to_bond(i::Integer) = _int_to_bond[i]
+idx_to_bond(i::Integer) = _idx_to_bond[i]
 allowed_orbitals() = collect(keys(_orb_to_L))
 allowed_bonds() = collect(keys(_bond_to_idx))
 
@@ -25,6 +25,18 @@ allowed_bonds() = collect(keys(_bond_to_idx))
 maximal bond symbol index given two angular momentum numbers.
 """
 max_symbol_idx(l1,l2) = min(l1, l2)
+
+"""
+`bondtypes` : get a list of bond types (σ, π, etc) acting between
+two bonds specified either by `SKBond` of an integer (`l`-value)
+"""
+function bondtypes(l1::Integer, l2::Integer)
+   sym = Symbol[]
+   for symidx = 0:max_symbol_idx(l1, l2)
+      push!(sym, idx_to_bond(symidx))
+   end
+   return sym
+end
 
 
 """
@@ -67,23 +79,33 @@ struct SKOrbital{S, N}
    valN::Val{N}   # shell index
 end
 
-Base.show(io::IO, ::SKOrbital{S, N}) where {S, N} =
-      write(io, "sko\"$N$S\"")
+Base.String(o::SKOrbital{S, N}) where {S, N} = replace("sk:$N$S", "0" => "")
+
+Base.show(io::IO, o::SKOrbital) = write(io, String(o))
 
 function SKOrbital(str)
    @assert 1 <= length(str) <= 2
-   @assert Symbol(s[end]) in allowed_orbitals()
+   @assert Symbol(str[end]) in allowed_orbitals()
    if length(str) == 1
       n = 0
    else
       n = parse(Int64, str[1])
    end
-   return SKOrbital(Val(str[end]), Val(n))
+   return SKOrbital(Val(Symbol(str[end])), Val(n))
 end
 
 macro sko_str(str) SKOrbital(str) end
 
 get_l(o::SKOrbital) = get_l(o.valS)
+get_idx(o::SKOrbital{S,N}) where {S,N} = N
+bondtypes(o1::SKOrbital, o2::SKOrbital) = bondtypes(get_l(o1), get_l(o2))
+
+# import Base.==
+# ==(o1::SKOrbital, o2::SKOrbital) = (o1.valS == o2.valS) && (o1.valN == o2.valN)
+
+import Base: isless
+isless(o1::SKOrbital, o2::SKOrbital) = (
+      (get_l(o1), get_idx(o1)) < (get_l(o2), get_idx(o2)) )
 
 # ----------------------------------------------------------------------------
 #    Bond Implementation
@@ -94,8 +116,10 @@ struct SKBond{O1,O2,SYM,N1,N2}
    valSYM::Val{SYM}
 end
 
-Base.show(io::IO, ::SKBond{O1,O2,SYM,N1,N2}) where {O1,O2,SYM,N1,N2} =
-   write(io, "skb\"$N1$O1$N2$O2$SYM\"")
+Base.String(b::SKBond{O1,O2,SYM,N1,N2}) where {O1,O2,SYM,N1,N2} =
+      replace("sk:$N1$O1$N2$O2$SYM", "0" => "")
+
+Base.show(io::IO, b::SKBond) = write(io, String(b))
 
 macro skb_str(str) SKBond(str) end
 
@@ -118,12 +142,40 @@ function SKBond(str)
                  Val(sym))
 end
 
+function SKBond(o1::SKOrbital, o2::SKOrbital, sym::Symbol)
+   @assert sym in allowed_bonds()
+   return SKBond(o1, o2, Val(sym))
+end
+
+
 get_l(b::SKBond) = get_l(b.o1), get_l(b.o2)
 
 get_bidx(b::SKBond) = get_bidx(b.valSYM)
 
+import Base: isless
+isless(b1::SKBond, b2::SKBond) = (
+      (b1.o2, b1.o1, get_bidx(b1)) < (b2.o2, b2.o1, get_bidx(b2)) )
 
 
+# ----------------------------
+# Sign conventions
+
+struct StandardSigns end
+signmod(::Type{StandardSigns}, args...) = 1
+
+struct FHISigns end
+signmod(::Type{FHISigns}, l1, l2, m1, m2) =
+   _codegen.signmatrix(l1, l2)[l1+m1+1, l2+m2+1]
+
+# Standard SK Sign convention???
+# TODO: Confirm this is ok as a sign convention!!!
+sksign(l1, l2) = (isodd(l1+l2) && (l1 > l2)) ? -1 : 1
+sksignt(l1, l2) = sksign(l2, l1)
+sksign(b::SKBond) = sksign(get_l(b)...)
+sksignt(b::SKBond) = sksignt(get_l(b)...)
+
+# ----------------------------
+#  OLD STUFF TO BE DELETED
 
 
 
@@ -147,10 +199,10 @@ function bondintegral_index(l1, l2, sym)
    if l1 < l2
       l1, l2 = l2, l1
    end
-   @assert sym <= max_symbol(l1, l2)
+   @assert sym <= max_symbol_idx(l1, l2)
 
    idx = 0
-   for _l1 = 0:l1, _l2 = 0:_l1, _sym = 0:max_symbol(_l1, _l2)
+   for _l1 = 0:l1, _l2 = 0:_l1, _sym = 0:max_symbol_idx(_l1, _l2)
       idx += 1
       if (_l1, _l2, _sym) == (l1, l2, sym)
          return idx

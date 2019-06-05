@@ -3,16 +3,17 @@ __precompile__(false)
 module CodeGeneration
 
 import JSON, Calculus
+using StaticArrays
 
 using PyCall: pyimport
 using JuLIP: save_json
-using SlaterKoster: max_symbol, bondintegral_index, orbital_index
-
+using SlaterKoster: max_symbol_idx, bondintegral_index, orbital_index
+using SlaterKoster: SKBond, get_l, get_bidx, StandardSigns, sksign, signmod
 
 # load the python part of the code generation
-const _pysys = pyimport("sys")
-push!(_pysys."path", @__DIR__())
-const _codegen = pyimport("codegen")
+# const _pysys = pyimport("sys")
+# push!(_pysys."path", @__DIR__())
+# const _codegen = pyimport("codegen")
 
 sympy = pyimport("sympy")
 sp_spin = pyimport("sympy.physics.quantum.spin")
@@ -46,7 +47,7 @@ function sk_table(L::Integer)
    norb = orbital_index(L, L)
    tbl = Dict{String, Any}("L" => L)
    for l1 = 0:L, l2=l1:L, m1=-l1:l1, m2=-l2:l2
-      for sym = 0:max_symbol(l1,l2)
+      for sym = 0:max_symbol_idx(l1,l2)
          tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym(l1,l2,m1,m2,sym)
       end
    end
@@ -57,11 +58,11 @@ function sk_table(L::Integer)
 end
 
 """
-INPUTS: l_1: Angular quantum number of atom 1.
-        l_2: Angular quantum number of atom 2.
-        m_1: Magnetic quantum number of atom 1.
-        m_2: Magnetic quantum number of atom 2.
-        M: A float which represents the type of symmetry bond we are considering, e.g. M = 0
+INPUTS: l1: Angular quantum number of atom 1.
+        l2: Angular quantum number of atom 2.
+        m1: Magnetic quantum number of atom 1.
+        m2: Magnetic quantum number of atom 2.
+        sym: A float which represents the type of symmetry bond we are considering, e.g. M = 0
            for sigma, M = 1 for pi, M = 2 for delta, etc.
         alpha: Azithmuthal coordinate.
         beta: Polar coordinate.
@@ -121,17 +122,6 @@ function py2jlcode(str)
 end
 
 
-struct StandardSigns end
-signmod(::Type{StandardSigns}, args...) = 1
-
-struct FHISigns end
-signmod(::Type{FHISigns}, l1, l2, m1, m2) =
-   _codegen.signmatrix(l1, l2)[l1+m1+1, l2+m2+1]
-
-# Standard SK Sign convention???
-# TODO: Confirm this is ok as a sign convention!!!
-sksign(l1, l2) = (isodd(l1+l2) && (l1 > l2)) ? -1 : 1
-
 
 """
 Generate a standard Slater-Koster off-diagonal block with inputs being
@@ -153,7 +143,7 @@ TODO: document the sign convention.
 
       # start assembling the expression for this matrix entry
       ex = "0.0"
-      for sym = 0:max_symbol(l1, l2)
+      for sym = 0:max_symbol_idx(l1, l2)
          # expression for the new entry
          # ex1 = Gsym(l1, l2, m1, m2, sym)
          ex1 = tbl[_lookupkey(l1,l2,m1,m2,sym)]
@@ -178,55 +168,22 @@ TODO: document the sign convention.
 end
 
 
+# ----------------------------------------------------------------------
+#   NEW IMPLEMENTATION
 
-# """
-# Generate a Slater-Koster off-diagonal block with inputs being
-# the bond integrals `V` and spherical coordinates `φ, θ`. The
-# bond integral "types" are encoded in `Val{BONDS}`
-#
-# TODO: document the sign convention.
-# """
-# @generated function sk_gen!(E, ::Val{BONDS}, V, φ, θ,
-#                             sgnconv::Type{SGN} = StandardSigns
-#                             ) where {BONDS, SGN}
-#    # compute the maximal L-degree
-#    L = max_L(BONDS)
-#    # get the SK expressions table
-#    tbl = sk_table(L)
-#
-#    code = Expr[]
-#    for l1 = 0:L, l2 = l1:L, m1 = -l1:l1, m2 = -l2:l2
-#       # matrix indices, skip the lower-triangular part
-#       I1 = orbital_index(l1, m1)
-#       I2 = orbital_index(l2, m2)
-#       if I2 < I1; continue; end
-#
-#       # start assembling the expression for this matrix entry
-#       ex = "0.0"
-#       for sym = 0:max_symbol(l1, l2)
-#          # expression for the new entry
-#          # ex1 = Gsym(l1, l2, m1, m2, sym)
-#          ex1 = tbl[_lookupkey(l1,l2,m1,m2,sym)]
-#          # extression for the bond integral V
-#          V_idx = bondintegral_index(l1, l2, sym)
-#          ex = "$ex + ($ex1) * V[$V_idx]"
-#       end
-#       ex_assign = " E[$I1, $I2] = $ex "
-#       push!(code, Calculus.simplify(Meta.parse(ex_assign)))
-#
-#       # symmetric part (if not on the diagonal)
-#       if I2 != I1
-#          # sign modification
-#          sig = sksign(l2, l1) * signmod(SGN)
-#          push!(code, :( E[$I2, $I1] = $sig * E[$I1, $I2] ))
-#       end
-#    end
-#    quote
-#       $(Expr(:block, code...))
-#       return g
-#    end
-# end
-
-
+@generated function sk_gen(::SKBond{O1, O2, SYM}, φ, θ) where {O1, O2, SYM}
+   # get the SK expressions table
+   l1, l2 = get_l(Val{O1}()), get_l(Val{O2}())
+   tbl = sk_table(max(l1,l2))
+   expr_str = "SMatrix{$(2*l1+1),$(2*l2+1)}("
+   for m2 = -l2:l2, m1 = -l1:l1
+      ex = tbl[_lookupkey(l1, l2, m1, m2, get_bidx(Val{SYM}()))]
+      expr_str *= ex * ", "
+   end
+   code = Meta.parse(expr_str[1:end-2] * ")")
+   quote
+      $code
+   end
+end
 
 end
