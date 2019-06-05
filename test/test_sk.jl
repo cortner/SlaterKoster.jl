@@ -4,7 +4,7 @@
 @info("Slater Koster Core Tests...")
 using SlaterKoster, Test, LinearAlgebra
 import SlaterKoster.CodeGeneration
-using SlaterKoster: SKH, sk, _sk!, allbonds, nbonds
+using SlaterKoster: SKH, skblock, allbonds, nbonds
 
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
@@ -28,18 +28,6 @@ for n = 1:5
 end
 println()
 
-@info("sk! test (the first sk! call is slow!)")
-for n = 1:10
-   V = rand(10) .- 0.5
-   U = rand(3) .- 0.5
-   U = U / norm(U)
-   Hold = SK.OldSK.sk9!(U, V, zeros(9,9))
-   Hnew = SK._sk!(zeros(9,9), Val(2), U, V)
-   perm = [1,3,4,2,5,6,9,7,8]
-   print((@test Hold[perm, perm] ≈ Hnew), " ")
-end
-println()
-
 
 @info("New implementation: sp")
 orbitals = [sko"s", sko"p"]
@@ -51,7 +39,7 @@ for n = 1:5
    V = rand(length(bonds))
    U = rand(3) .- 0.5
    U /= norm(U)
-   Hnew = sk(H, U, V)
+   Hnew = skblock(H, U, V)
    Hold = SK.OldSK.sk4!(U, V, zeros(4,4))
    perm = [1,3,4,2]
    println(@test Hnew ≈ Hold[perm, perm])
@@ -65,7 +53,7 @@ for n = 1:5
    V = rand(nbonds(H))
    U = rand(3) .- 0.5
    U /= norm(U)
-   Hnew = sk(H, U, V)
+   Hnew = skblock(H, U, V)
    Hold = SK.OldSK.sk9!(U, V, zeros(9,9))
    perm = [1,3,4,2,5,6,9,7,8]
    println(@test Hnew ≈ Hold[perm, perm])

@@ -5,13 +5,12 @@ module NewAssembly
 """
 Store a TB Hamiltonian in RI format (i.e. the bond integrals)
 """
-mutable struct OffsiteHamiltonianRI{ORB, T}
-   Iat::Vector{Int}            # first atom index
-   Jat::Vector{Int}            # second atom index
+mutable struct OffsiteHamiltonianRI{T}
+   H::SHK
+   Iat::Vector{Int}            # first atom index i
+   Jat::Vector{Int}            # second atom index j
    R::Vector{SVector{3,T}}     # X[j] - X[i]
-   V::Vector{T}                # a bond integral value
-   bond_type::Vector{IntBond}  # which bond type
-   orbitals::Orbitals{ORB}          # Multi-Species => Vector{Orbitals}
+   V::Matrix{T}                # a bond integral value
    Nat::Int
 end
 

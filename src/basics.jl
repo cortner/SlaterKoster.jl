@@ -334,3 +334,6 @@ end
 # # function bond2orb(b::IntBond, orbitals::Orbitals)
 # #
 # # end
+
+
+abstract type SKModel end

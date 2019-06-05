@@ -14,10 +14,8 @@ using Reexport
 # my old codes from the previous TB package
 include("oldsk.jl")
 
+# basic SK machinery
 include("basics.jl")
-
-# define non-local types and functions
-include("prototypes.jl")
 
 # evaluate the SK blocks
 include("code_generation.jl")

@@ -4,70 +4,6 @@ using SlaterKoster.CodeGeneration: sk_gen!
 
 export @skh_str
 
-########################################################################
-######## Interface for computing SK Blocks     #########################
-########################################################################
-
-"""
-* `sk(H, args...)`
-* `sk(NORB, args...)`
-allocating version of `sk!`
-"""
-sk(H::SKHamiltonian{NORB}, args...) where {NORB} =
-      sk!(zero(MMatrix{NORB,NORB,Float64}), H, args...)
-sk(norb::Integer, args...) = sk(Val(norb), args...)
-sk(val::Val{NORB}, args...) where {NORB} =
-      _sk!(zero(MMatrix{NORB,NORB,Float64}), val, args...)
-
-"""
-`sk!(out, H, U, bonds)` : main method for assembling SK blocks
-
-TODO: write documentation
-"""
-
-
-# the following is just an interface and needs to be replaced of course
-
-######## s-orbital model
-sk!(out, H::SKHamiltonian{1}, U, bonds) = setindex!(out, bonds[1], 1)
-
-# TODO: wait until needed
-# function sk_d!{IO}(H::SKHamiltonian{IO, 1}, r, R, b, db, dH_nm)
-#    # dH_nm is 3 x 1 x 1 so we can just index it linearly    (NORB = 1)
-#    for a = 1:3
-#       dH_nm[a] = db[1] * R[a] / r
-#    end
-#    return dH_nm
-# end
-
-######## sp-orbital model
-
-sk!(out, H::SKHamiltonian{4}, U, bonds) = OldSK.sk4!(U, bonds, out)
-# sk_d!{IO}(H::SKHamiltonian{IO, 4}, r, R, b, db, dout) = _sk4_d!(R/r, r, b, db, dout)
-
-######## spd-orbital model
-
-sk!(out, H::SKHamiltonian{9}, U, bonds) = OldSK._sk9!(U, bonds, out)
-# sk_d!{IO}(H::SKHamiltonian{IO, 9}, r, R, b, db, dout) = _sk9_d!(R/r, r, b, db, dout)
-
-
-
-########################################################################
-
-
-norb2L(::Val{1}) = Val(0)    # s
-norb2L(::Val{4}) = Val(1)    # p
-norb2L(::Val{9}) = Val(2)    # d
-norb2L(::Val{16}) =Val(3)    # f
-
-sk!(out, H::SKHamiltonian{NORB}, U, bonds) where {NORB} =
-            _sk!(out, norb2L(Val{NORB}()), U, bonds)
-
-function _sk!(out, valL::Val{L}, U, V) where {L}
-   φ, θ = carttospher(U[1], U[2], U[3])
-   return sk_gen!(out, valL, V, φ, θ)
-end
-
 
 # this assumes that the coordinates are normalised
 # TODO: α=φ, β=θ
@@ -149,6 +85,7 @@ function SKH(orbitals::AbstractVector{<: SKOrbital},
    return SKH(orbitals, bonds, b2o, locorbidx, sig)
 end
 
+
 SKH(orbitals::AbstractVector{<: SKOrbital}, sig=StandardSigns) =
                SKH(orbitals, allbonds(orbitals), sig)
 
@@ -166,13 +103,17 @@ end
 macro skh_str(s) SKH(s) end
 
 
-
-
 max_locidx(H::SKH) = maximum(maximum(I) for I in H.locorbidx)
 
 alloc_block(H::SKH) = zeros(max_locidx(H::SKH), max_locidx(H::SKH))
 
-function sk(H::SKH, U, V)
+"""
+`skblock:` assemble a Slater-Koster matrix block.
+
+**Warning:** this is type-unstable and should not be used to assemble large
+Hamiltonians.
+"""
+function skblock(H::SKH, U, V)
    φ, θ = carttospher(U[1], U[2], U[3])
    E = alloc_block(H)
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
