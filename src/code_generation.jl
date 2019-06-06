@@ -15,6 +15,8 @@ using SlaterKoster: SKBond, get_l, get_bidx, StandardSigns, sksign, signmod
 # push!(_pysys."path", @__DIR__())
 # const _codegen = pyimport("codegen")
 
+# TODO: switch this to SymPy.jl ???
+
 sympy = pyimport("sympy")
 sp_spin = pyimport("sympy.physics.quantum.spin")
 

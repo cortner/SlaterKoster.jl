@@ -1,7 +1,7 @@
 
 module OldSK
 
-using StaticArrays, JuLIP 
+using StaticArrays, JuLIP
 
 """
 `abstract type SKHamiltonian{NORB}` : supertype for Hamiltonian
@@ -310,7 +310,8 @@ end
 
 
 
-
+sk!(out, H::SKHamiltonian{4}, U, bonds) = sk4!(U, bonds, out)
+sk!(out, H::SKHamiltonian{9}, U, bonds) = sk4!(U, bonds, out)
 
 
 using StaticArrays

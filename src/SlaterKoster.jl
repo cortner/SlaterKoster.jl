@@ -27,6 +27,8 @@ include("matrixassembly.jl")
 
 # Some basic models - mostly for testing?
 include("models.jl")
-# - Kwon TB
+@reexport using SlaterKoster.Models
+# This exports
+#  - KwonTB
 
 end # module

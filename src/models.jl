@@ -5,9 +5,10 @@ using Parameters
 using SlaterKoster: TwoCentreModel, SKH
 using JuLIP.Potentials: fcut
 
-import SlaterKoster: eval_bonds!, getshk
+import SlaterKoster: eval_bonds!, eval_diag!, getskh
 import JuLIP: cutoff
 
+export KwonTB
 
 
 """
@@ -46,9 +47,9 @@ Phys Rev B 49 (11), 1994.
    rcut::Float64 = 4.16       # Å  (end of cut-off)
 end
 
-cutoff(model::KwonTB) = H.rcut
+cutoff(model::KwonTB) = model.rcut
 
-getshk(model::KwonTB) = model.skh
+getskh(model::KwonTB) = model.skh
 
 # isorthogonal(H::KwonTB) = true
 
@@ -58,11 +59,17 @@ kwon_bond(m::KwonTB, r::Real, α) = (
 
 function eval_bonds!(V, model::KwonTB, r)
    fc = fcut(r, model.r1, model.rcut)
-   for α = 1:2
+   for α = 1:4
       V[α] = kwon_bond(model, r, α) * fc
    end
    return V
 end
 
+
+function eval_diag!(D, model::KwonTB, r, R)
+   D[1] = model.Es
+   D[2:4] .= model.Ep
+   return D
+end
 
 end
