@@ -27,6 +27,7 @@ const Rotation = sp_spin.Rotation
 _lookupkey(l1, l2, m1, m2, sym) = "$l1,$l2,$m1,$m2,$sym"
 _fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 
+
 """
 `sk_table(L::Integer)` : read or create a table of SK matrix element expressions
 """
@@ -46,7 +47,6 @@ function sk_table(L::Integer)
    end
 
    # create a new lookup table
-   norb = orbital_index(L, L)
    tbl = Dict{String, Any}("L" => L)
    for l1 = 0:L, l2=l1:L, m1=-l1:l1, m2=-l2:l2
       for sym = 0:max_symbol_idx(l1,l2)
