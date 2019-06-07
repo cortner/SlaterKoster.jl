@@ -113,7 +113,7 @@ alloc_block(H::SKH) = zeros(max_locidx(H::SKH), max_locidx(H::SKH))
 **Warning:** this is type-unstable and should not be used to assemble large
 Hamiltonians.
 """
-function skblock(H::SKH, U, V)
+function sk2h(H::SKH, U, V)
    φ, θ = carttospher(U[1], U[2], U[3])
    E = alloc_block(H)
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
@@ -126,4 +126,13 @@ function skblock(H::SKH, U, V)
       end
    end
    return E
+end
+
+
+"""
+todo doc
+"""
+function h2sk(H::SKH, U, E::AbstractMatrix)
+   φ, θ = carttospher(U[1], U[2], U[3])
+   
 end
