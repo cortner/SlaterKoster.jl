@@ -109,10 +109,10 @@ function _assembleRI!(Iat, Jat, R, V, nlist, model, temp)
    R_filtered = sizehint!(JVecF[], max_neigs(nlist))  # allocate without growing the array
    for (i, J, r, R) in sites(nlist)
       for (nj, j) in enumerate(J)
-         Rji  = R[j]-R[i]
-         # filter -> Ks, Rs = [R[k]-R[i] for k in ...]
-         for k in J
-            Rki = R[k]-R[i]
+         Rji  = R[j]  # R[j] = X[j] - X[i]
+         # filter -> Ks, Rs = [X[k]-X[i] for k in ...]
+         for k in Jh
+            Rki = R[k]
             if (k != j) && filter_nhd(Rji, Rki)
                push!(R_filtered, Rki)
             end

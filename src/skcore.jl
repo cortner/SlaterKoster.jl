@@ -134,5 +134,5 @@ todo doc
 """
 function h2sk(H::SKH, U, E::AbstractMatrix)
    φ, θ = carttospher(U[1], U[2], U[3])
-   
+
 end
