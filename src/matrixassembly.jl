@@ -7,7 +7,7 @@ using LinearAlgebra: norm
 """
 Store a TB Hamiltonian in RI format (i.e. the bond integrals)
 """
-mutable struct OffsiteHamiltonianRI{T}
+mutable struct SKHamiltonianRI{T}
    skh::SKH
    model::SKModel
    Nat::Int
@@ -20,7 +20,7 @@ mutable struct OffsiteHamiltonianRI{T}
    D::Matrix{T}                # diagonal entries Nat x norbitals
 end
 
-Base.length(H::OffsiteHamiltonianRI) = length(H.Iat)
+Base.length(H::SKHamiltonianRI) = length(H.Iat)
 
 
 # -----
@@ -53,7 +53,7 @@ function assembleRI(at::Atoms, model::TwoCentreModel)
    D = zeros(Nat, nbonds(skh))
    _assembleRI_diag!(D, model, nlist, temp)
 
-   return OffsiteHamiltonianRI(skh, model, Nat, Iat, Jat, R, V, D)
+   return SKHamiltonianRI(skh, model, Nat, Iat, Jat, R, V, D)
 end
 
 function _assembleRI!(V, R, model::TwoCentreModel, temp)
@@ -100,7 +100,7 @@ function assembleRI(at::Atoms, model::SKModel)
    D = zeros(Nat, nbonds(skh))
    _assembleRI_diag!(D, model, nlist, temp)
 
-   return OffsiteHamiltonianRI(skh, model, Nat, Iat, Jat, R, V, D)
+   return SKHamiltonianRI(skh, model, Nat, Iat, Jat, R, V, D)
 end
 
 
@@ -152,7 +152,7 @@ function local_indices(nb::Integer, skh::SKH)
    return SVector(I1...), SVector(I2...)
 end
 
-function Base.Matrix(HRI::OffsiteHamiltonianRI{T}) where {T}
+function Base.Matrix(HRI::SKHamiltonianRI{T}) where {T}
    # ------------------------------------------------------------------------
    # this "outer" matrix assembly is intentionally type unstable; it prepares
    # everything needed for a fast assembly in _assemble_full_inner!, which is the

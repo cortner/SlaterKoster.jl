@@ -1,6 +1,5 @@
 using StaticArrays
 
-using SlaterKoster.CodeGeneration: sk_gen!
 
 export @skh_str
 
@@ -108,12 +107,12 @@ max_locidx(H::SKH) = maximum(maximum(I) for I in H.locorbidx)
 alloc_block(H::SKH) = zeros(max_locidx(H::SKH), max_locidx(H::SKH))
 
 """
-`skblock:` assemble a Slater-Koster matrix block.
+`sk2cart:` assemble a Slater-Koster matrix block.
 
 **Warning:** this is type-unstable and should not be used to assemble large
 Hamiltonians.
 """
-function sk2h(H::SKH, U, V)
+function sk2cart(H::SKH, U, V)
    φ, θ = carttospher(U[1], U[2], U[3])
    E = alloc_block(H)
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
@@ -132,7 +131,6 @@ end
 """
 todo doc
 """
-function h2sk(H::SKH, U, E::AbstractMatrix)
+function cart2sk(H::SKH, U, E::AbstractMatrix)
    φ, θ = carttospher(U[1], U[2], U[3])
-
 end

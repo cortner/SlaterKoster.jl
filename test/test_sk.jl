@@ -4,7 +4,7 @@
 @info("Slater Koster Core Tests...")
 using SlaterKoster, Test, LinearAlgebra
 import SlaterKoster.CodeGeneration
-using SlaterKoster: SKH, skblock, allbonds, nbonds
+using SlaterKoster: SKH, sk2cart, allbonds, nbonds
 
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
@@ -39,7 +39,7 @@ for n = 1:5
    V = rand(length(bonds))
    U = rand(3) .- 0.5
    U /= norm(U)
-   Hnew = skblock(H, U, V)
+   Hnew = sk2cart(H, U, V)
    Hold = SK.OldSK.sk4!(U, V, zeros(4,4))
    perm = [1,3,4,2]
    println(@test Hnew ≈ Hold[perm, perm])
@@ -53,7 +53,7 @@ for n = 1:5
    V = rand(nbonds(H))
    U = rand(3) .- 0.5
    U /= norm(U)
-   Hnew = skblock(H, U, V)
+   Hnew = sk2cart(H, U, V)
    Hold = SK.OldSK.sk9!(U, V, zeros(9,9))
    perm = [1,3,4,2,5,6,9,7,8]
    println(@test Hnew ≈ Hold[perm, perm])
