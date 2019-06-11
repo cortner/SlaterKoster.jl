@@ -112,11 +112,11 @@ alloc_block(H::SKH) = zeros(max_locidx(H::SKH), max_locidx(H::SKH))
 **Warning:** this is type-unstable and should not be used to assemble large
 Hamiltonians.
 """
-function sk2cart(H::SKH, U, V, wd = nothing)
+function sk2cart(H::SKH, U, V)
    φ, θ = carttospher(U[1], U[2], U[3])
    E = alloc_block(H)
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
-      E12 = CodeGeneration.sk_gen(b, φ, θ, wd)
+      E12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
       I2 = H.locorbidx[io2]
       E[I1, I2] .+= (sksign(b) * Vb) * E12
@@ -127,13 +127,42 @@ function sk2cart(H::SKH, U, V, wd = nothing)
    return E
 end
 
+"""
+`sk2cart_d:` assemble a Slater-Koster matrix block.
+
+**Warning:** this is type-unstable and should not be used to assemble large
+Hamiltonians.
+"""
+function sk2cart_d(H::SKH, U, V)
+   φ, θ = carttospher(U[1], U[2], U[3])
+   E = alloc_block(H)
+   for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+      E12 = CodeGeneration.sk_gen_d(b, φ, θ)
+      I1 = H.locorbidx[io1]
+      I2 = H.locorbidx[io2]
+      E[I1, I2] .+= (sksign(b) * Vb) * E12
+      if io1 != io2
+         E[I2, I1] .+= sksignt(b) * Vb * E12'
+      end
+   end
+   return E
+end
 
 """
 todo doc
 """
-function cart2sk(E::AbstractMatrix, U)
+function cart2sk(H::SKH, E::AbstractMatrix, U)
    φ, θ = carttospher(U[1], U[2], U[3])
-   H::SKH
+   for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+      E12 = CodeGeneration.sk_gen(b, φ, θ)
+      I1 = H.locorbidx[io1]
+      I2 = H.locorbidx[io2]
+      H[I1, I2] .+= (sksign(b) * Vb) * E12
+      if io1 != io2
+         H[I2, I1] .+= sksignt(b) * Vb * E12'
+      end
+   end
+   return H
 end
 
 

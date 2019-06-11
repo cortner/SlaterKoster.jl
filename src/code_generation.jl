@@ -24,7 +24,7 @@ const spsin = sympy.sin
 const spcos = sympy.cos
 const Rotation = sp_spin.Rotation
 
-_lookupkey(l1, l2, m1, m2, sym, d) = "$l1,$l2,$m1,$m2,$sym,$d"
+_lookupkey(l1, l2, m1, m2, sym) = "$l1,$l2,$m1,$m2,$sym"
 _fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 
 
@@ -68,7 +68,7 @@ end
 """
 `sk_table(L::Integer)` : read or create a table of SK matrix element expressions
 """
-function sk_table(L::Integer, wd = nothing)
+function sk_table(L::Integer)
    filepath = _fname_sktable()
    try
       tbl = JSON.parsefile(filepath)
@@ -84,11 +84,38 @@ function sk_table(L::Integer, wd = nothing)
    end
 
    # create a new lookup table
-   d = (wd == nothing) ? 0 : 1
    tbl = Dict{String, Any}("L" => L)
    for l1 = 0:L, l2=l1:L, m1=-l1:l1, m2=-l2:l2
       for sym = 0:max_symbol_idx(l1,l2)
-         tbl[_lookupkey(l1,l2,m1,m2,sym,d)] = Gsym(l1,l2,m1,m2,sym,wd)
+         tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym(l1,l2,m1,m2,sym)
+      end
+   end
+   save_json(filepath, tbl)
+
+   # return the new table
+   return tbl
+end
+
+function sk_table_d(L::Integer)
+   filepath = _fname_sktable()
+   try
+      tbl = JSON.parsefile(filepath)
+      if tbl["L"] >= L
+         # return the existing table
+         return tbl
+      end
+      @info("""The existing lookup table does not contain a high enough degree.
+               I'm now going to create a new one which can take a little while.""")
+   catch
+      @info("""Reading SK lookup table was unsuccesful, I'm now going to create
+               a new one. This could take a while (O(minutes))""")
+   end
+
+   # create a new lookup table
+   tbl = Dict{String, Any}("L" => L)
+   for l1 = 0:L, l2=l1:L, m1=-l1:l1, m2=-l2:l2
+      for sym = 0:max_symbol_idx(l1,l2)
+         tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym_d(l1,l2,m1,m2,sym)
       end
    end
    save_json(filepath, tbl)
@@ -109,7 +136,7 @@ INPUTS: l1: Angular quantum number of atom 1.
 RETURNS: This function returns the relevant coefficient that should be are used in writing the
          Slater-Koster transformations.
 """
-function Gsym(l1, l2, m1, m2, sym, wd = nothing)
+function Gsym(l1, l2, m1, m2, sym)
 
    φ, θ = sympy.symbols("phi, theta")
 
@@ -121,8 +148,49 @@ function Gsym(l1, l2, m1, m2, sym, wd = nothing)
    B(m, φ) = ( (m == 0) ? 0 :
                (-1)^m * (τ(-m) * spcos(abs(m)*φ) - τ(m) * spsin(abs(m)*φ) ) )
 
-   rot(l, m, sym, θ) = ( (wd == nothing) ? Rotation.d(l, m, sym, θ).doit() :
-                                             wigner_d(l, m, sym, θ) )
+   rot(l, m, sym, θ) = Rotation.d(l, m, sym, θ).doit()
+
+   S(l, m, sym, φ, θ) = A(m, φ) * ( (-1)^sym * rot(l, abs(m),  sym, θ)
+                                             + rot(l, abs(m), -sym, θ) )
+
+   T(l, m, sym, φ, θ) = B(m, φ) * ( (-1)^sym * rot(l, abs(m),  sym, θ)
+                                             - rot(l, abs(m), -sym, θ) )
+
+   if sym == 0
+      expr = (2 * A(m1, φ) * rot(l1, abs(m1), 0, θ)
+                * A(m2, φ) * rot(l2, abs(m2), 0, θ) )
+   else
+      expr = (   S(l1, m1, sym, φ, θ) * S(l2, m2, sym, φ, θ)
+               + T(l1, m1, sym, φ, θ) * T(l2, m2, sym, φ, θ) )
+   end
+
+   expr = expr.simplify()
+
+   # x, y, z = sympy.symbols("x y z")
+   # expr = expr.simplify()
+   # expr = expr.subs(spsin(φ) * spsin(θ), y)
+   # expr = expr.subs(spcos(φ) * spsin(θ), x)
+   # expr = expr.subs(spcos(θ), z)
+   # # expr = expr.subs(spsin(φ)^2, 1.0 - spcos(φ)^2)
+   # expr = expr.simplify()
+
+   # convert the sympy expression into a string
+   return py2jlcode(expr.__str__())
+end
+
+function Gsym_d(l1, l2, m1, m2, sym)
+
+   φ, θ = sympy.symbols("phi, theta")
+
+   τ(m) = (m >= 0) ? 1 : 0
+
+   A(m, φ) = ( (m == 0) ? sympy.sqrt(2)/2 :
+               (-1)^m * (τ(m) * spcos(abs(m)*φ) + τ(-m) * spsin(abs(m)*φ)) )
+
+   B(m, φ) = ( (m == 0) ? 0 :
+               (-1)^m * (τ(-m) * spcos(abs(m)*φ) - τ(m) * spsin(abs(m)*φ) ) )
+
+   rot(l, m, sym, θ) = wigner_d(l, m, sym, θ)
 
    S(l, m, sym, φ, θ) = A(m, φ) * ( (-1)^sym * rot(l, abs(m),  sym, θ)
                                              + rot(l, abs(m), -sym, θ) )
@@ -163,14 +231,28 @@ function py2jlcode(str)
 end
 
 
-@generated function sk_gen(::SKBond{O1, O2, SYM}, φ, θ, wd) where {O1, O2, SYM}
+@generated function sk_gen(::SKBond{O1, O2, SYM}, φ, θ) where {O1, O2, SYM}
    # get the SK expressions table
    l1, l2 = get_l(Val{O1}()), get_l(Val{O2}())
-   tbl = sk_table(max(l1,l2), wd)
-   d = (wd == nothing) ? 0 : 1
+   tbl = sk_table(max(l1,l2))
    expr_str = "SMatrix{$(2*l1+1),$(2*l2+1)}("
    for m2 = -l2:l2, m1 = -l1:l1
-      ex = tbl[_lookupkey(l1, l2, m1, m2, get_bidx(Val{SYM}()), d)]
+      ex = tbl[_lookupkey(l1, l2, m1, m2, get_bidx(Val{SYM}()))]
+      expr_str *= ex * ", "
+   end
+   code = Meta.parse(expr_str[1:end-2] * ")")
+   quote
+      $code
+   end
+end
+
+@generated function sk_gen_d(::SKBond{O1, O2, SYM}, φ, θ) where {O1, O2, SYM}
+   # get the SK expressions table
+   l1, l2 = get_l(Val{O1}()), get_l(Val{O2}())
+   tbl = sk_table_d(max(l1,l2))
+   expr_str = "SMatrix{$(2*l1+1),$(2*l2+1)}("
+   for m2 = -l2:l2, m1 = -l1:l1
+      ex = tbl[_lookupkey(l1, l2, m1, m2, get_bidx(Val{SYM}()))]
       expr_str *= ex * ", "
    end
    code = Meta.parse(expr_str[1:end-2] * ")")

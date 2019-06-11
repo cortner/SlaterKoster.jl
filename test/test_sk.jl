@@ -4,7 +4,7 @@
 @info("Slater Koster Core Tests...")
 using SlaterKoster, Test, LinearAlgebra
 import SlaterKoster.CodeGeneration
-using SlaterKoster: SKH, sk2cart, allbonds, nbonds
+using SlaterKoster: SKH, sk2cart, sk2cart_d, allbonds, nbonds
 
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
@@ -27,7 +27,6 @@ for n = 1:5
    print((@test U ≈ V), " ")
 end
 println()
-
 
 @info("New implementation: sp")
 orbitals = [sko"s", sko"p"]
@@ -69,9 +68,23 @@ for n = 1:5
    V = rand(length(bonds))
    U = rand(3) .- 0.5
    U /= norm(U)
-   Hnew = sk2cart(H, U, V, 1)
+   Hnew = sk2cart_d(H, U, V)
    Hold = sk2cart(H, U, V)
    perm = [1,3,4,2]
+   println(@test Hnew ≈ Hold[perm, perm])
+end
+
+@info("New wigner small d implementation: spd")
+orbitals = [sko"s", sko"p", sko"d"]
+H = SKH(orbitals) # generate bonds automatically
+println(@test H == SKH("spd"))
+for n = 1:5
+   V = rand(nbonds(H))
+   U = rand(3) .- 0.5
+   U /= norm(U)
+   Hnew = sk2cart_d(H, U, V)
+   Hold = SK.OldSK.sk9!(U, V, zeros(9,9))
+   perm = [1,3,4,2,5,6,9,7,8]
    println(@test Hnew ≈ Hold[perm, perm])
 end
 
