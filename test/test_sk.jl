@@ -59,4 +59,20 @@ for n = 1:5
    println(@test Hnew ≈ Hold[perm, perm])
 end
 
+@info("New numerical implementation: sp")
+orbitals = [sko"s", sko"p"]
+bonds = [skb"ssσ", skb"spσ", skb"ppσ", skb"ppπ"]
+println(@test bonds == allbonds(orbitals))
+H = SKH(orbitals, bonds)
+println(@test H == SKH("sp"))
+for n = 1:5
+   V = rand(length(bonds))
+   U = rand(3) .- 0.5
+   U /= norm(U)
+   Hnew = sk2cart(H, U, V, 1)
+   Hold = sk2cart(H, U, V)
+   perm = [1,3,4,2]
+   println(@test Hnew ≈ Hold[perm, perm])
+end
+
 end
