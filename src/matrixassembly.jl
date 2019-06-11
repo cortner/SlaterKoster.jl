@@ -152,7 +152,7 @@ function local_indices(nb::Integer, skh::SKH)
    return SVector(I1...), SVector(I2...)
 end
 
-function Base.Matrix(HRI::SKHamiltonianRI{T}) where {T}
+function Base.Matrix(HRI::SKHamiltonianRI{T}, wd=0) where {T}
    # ------------------------------------------------------------------------
    # this "outer" matrix assembly is intentionally type unstable; it prepares
    # everything needed for a fast assembly in _assemble_full_inner!, which is the
@@ -171,7 +171,7 @@ function Base.Matrix(HRI::SKHamiltonianRI{T}) where {T}
       @assert ( (irowloc isa SVector{N, <: Integer} where {N}) &&
                 (jcolloc isa SVector{N, <: Integer} where {N}) )
       # call the function barrier
-      _assemble_full_inner!(H, HRI, nb, HRI.skh.bonds[nb], irowloc, jcolloc, norbloc)
+      _assemble_full_inner!(H, HRI, nb, HRI.skh.bonds[nb], irowloc, jcolloc, norbloc, wd)
    end
 
    _assemble_full_inner_diag!(H, HRI, SVector((1:norbloc)...))  # TODO: split into TwoCentre / General
@@ -183,14 +183,14 @@ end
 #    - irowloc, jcolloc could become type parameters
 #    - the global indices could be incremented rather than recomputed
 #    - compute only upper triangular part, copy the lower triangular part
-function _assemble_full_inner!(H, HRI, nb, b, irowloc, jcolloc, norbloc)
+function _assemble_full_inner!(H, HRI, nb, b, irowloc, jcolloc, norbloc, wd=0)
    sig = sksign(b)
    sigt = sksignt(b)
    for (n, (iat, jat, R)) in enumerate( zip(HRI.Iat, HRI.Jat, HRI.R) )
       V = HRI.V[n, nb]
       U = R / norm(R)
       φ, θ = carttospher(U[1], U[2], U[3])
-      E12 = CodeGeneration.sk_gen(b, φ, θ)
+      E12 = CodeGeneration.sk_gen(b, φ, θ, wd)
       irowglob = global_index(iat, irowloc, HRI.Nat, norbloc)
       jcolglob = global_index(jat, jcolloc, HRI.Nat, norbloc)
       H[irowglob, jcolglob] += sig * V * E12

@@ -59,7 +59,7 @@ for n = 1:5
    println(@test Hnew ≈ Hold[perm, perm])
 end
 
-@info("New numerical implementation: sp")
+@info("New wigner small d implementation: sp")
 orbitals = [sko"s", sko"p"]
 bonds = [skb"ssσ", skb"spσ", skb"ppσ", skb"ppπ"]
 println(@test bonds == allbonds(orbitals))

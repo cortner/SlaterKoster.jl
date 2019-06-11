@@ -24,7 +24,7 @@ const spsin = sympy.sin
 const spcos = sympy.cos
 const Rotation = sp_spin.Rotation
 
-_lookupkey(l1, l2, m1, m2, sym) = "$l1,$l2,$m1,$m2,$sym"
+_lookupkey(l1, l2, m1, m2, sym, d) = "$l1,$l2,$m1,$m2,$sym,$d"
 _fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 
 
@@ -68,7 +68,7 @@ end
 """
 `sk_table(L::Integer)` : read or create a table of SK matrix element expressions
 """
-function sk_table(L::Integer, numcalc)
+function sk_table(L::Integer, wd = nothing)
    filepath = _fname_sktable()
    try
       tbl = JSON.parsefile(filepath)
@@ -84,10 +84,11 @@ function sk_table(L::Integer, numcalc)
    end
 
    # create a new lookup table
+   d = (wd == nothing) ? 0 : 1
    tbl = Dict{String, Any}("L" => L)
    for l1 = 0:L, l2=l1:L, m1=-l1:l1, m2=-l2:l2
       for sym = 0:max_symbol_idx(l1,l2)
-         tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym(l1,l2,m1,m2,sym,numcalc)
+         tbl[_lookupkey(l1,l2,m1,m2,sym,d)] = Gsym(l1,l2,m1,m2,sym,wd)
       end
    end
    save_json(filepath, tbl)
@@ -108,7 +109,7 @@ INPUTS: l1: Angular quantum number of atom 1.
 RETURNS: This function returns the relevant coefficient that should be are used in writing the
          Slater-Koster transformations.
 """
-function Gsym(l1, l2, m1, m2, sym, numcalc=nothing)
+function Gsym(l1, l2, m1, m2, sym, wd = nothing)
 
    φ, θ = sympy.symbols("phi, theta")
 
@@ -120,8 +121,8 @@ function Gsym(l1, l2, m1, m2, sym, numcalc=nothing)
    B(m, φ) = ( (m == 0) ? 0 :
                (-1)^m * (τ(-m) * spcos(abs(m)*φ) - τ(m) * spsin(abs(m)*φ) ) )
 
-   rot(l, m, sym, θ) = ( (numcalc == nothing) ? Rotation.d(l, m, sym, θ).doit() : 
-			                          wigner_d(l, m, sym, θ) )
+   rot(l, m, sym, θ) = ( (wd == nothing) ? Rotation.d(l, m, sym, θ).doit() :
+                                             wigner_d(l, m, sym, θ) )
 
    S(l, m, sym, φ, θ) = A(m, φ) * ( (-1)^sym * rot(l, abs(m),  sym, θ)
                                              + rot(l, abs(m), -sym, θ) )
@@ -162,13 +163,14 @@ function py2jlcode(str)
 end
 
 
-@generated function sk_gen(::SKBond{O1, O2, SYM}, φ, θ, numcalc) where {O1, O2, SYM}
+@generated function sk_gen(::SKBond{O1, O2, SYM}, φ, θ, wd) where {O1, O2, SYM}
    # get the SK expressions table
    l1, l2 = get_l(Val{O1}()), get_l(Val{O2}())
-   tbl = sk_table(max(l1,l2), numcalc)
+   tbl = sk_table(max(l1,l2), wd)
+   d = (wd == nothing) ? 0 : 1
    expr_str = "SMatrix{$(2*l1+1),$(2*l2+1)}("
    for m2 = -l2:l2, m1 = -l1:l1
-      ex = tbl[_lookupkey(l1, l2, m1, m2, get_bidx(Val{SYM}()))]
+      ex = tbl[_lookupkey(l1, l2, m1, m2, get_bidx(Val{SYM}()), d)]
       expr_str *= ex * ", "
    end
    code = Meta.parse(expr_str[1:end-2] * ")")
