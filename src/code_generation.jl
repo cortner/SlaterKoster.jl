@@ -139,4 +139,16 @@ end
    end
 end
 
-end
+
+# TODO: create in-place type-stable versions of sk_gen
+#       taking l, m as input 
+# _parse_key(k) = eval(Meta.parse("[" * k * "]"))
+#
+# # generate code for sk blocks
+# # require at least spd
+# tbl = sk_table(2)
+# lmax = 2
+# for (key, expr) in tbl
+#    lmax = max(lmax, _parse_key(key)[1])
+# end
+# _sk_f_tbl =

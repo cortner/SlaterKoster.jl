@@ -1,7 +1,7 @@
 using StaticArrays
 
 
-export @skh_str
+export @skh_str, SKH
 
 
 # this assumes that the coordinates are normalised
@@ -22,9 +22,9 @@ end
 
 
 
-struct SKH{TO, TB, SIGN}
-   orbitals::Vector{TO}    # this should become a `species => orbitals` list
-   bonds::Vector{TB}       # this should become a `(spec1, spec2) => bonds list`
+struct SKH{SIGN}
+   orbitals::Vector{SKOrbital}    # this should become a `species => orbitals` list
+   bonds::Vector{SKBond}       # this should become a `(spec1, spec2) => bonds list`
    b2o::Vector{Tuple{Int,Int}}
    locorbidx::Vector{Vector{Int}}
    sig::Type{SIGN}
@@ -84,17 +84,21 @@ function SKH(orbitals::AbstractVector{<: SKOrbital},
    return SKH(orbitals, bonds, b2o, locorbidx, sig)
 end
 
+_create_idx(orbitals::AbstractVector{<: SKOrbital}) =
+   [ SKOrbital(o, idx) for (idx, o) in enumerate(orbitals) ]
 
-SKH(orbitals::AbstractVector{<: SKOrbital}, sig=StandardSigns) =
-               SKH(orbitals, allbonds(orbitals), sig)
+function SKH(orbitals::AbstractVector{<: SKOrbital}, sig=StandardSigns)
+   orbs_indx = _create_idx(orbitals)
+   return SKH(orbs_indx, allbonds(orbs_indx), sig)
+end
 
 # experimental constructor for a TB model
 function SKH(str::AbstractString, sig = StandardSigns)
    if '0' <= str[1] <= '9'
       @assert iseven(length(str))
-      orbitals = [ SKOrbital(str[n:n+1]) for n = 1:2:length(str) ]
+      orbitals = [ SKOrbital(str[n:n+1]) for n in 1:2:length(str) ]
    else
-      orbitals = [ SKOrbital(str[n:n]) for n = 1:length(str) ]
+      orbitals = [ SKOrbital(str[n:n])   for n = 1:length(str) ]
    end
    return SKH(orbitals, sig)
 end

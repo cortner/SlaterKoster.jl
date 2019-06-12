@@ -1,6 +1,6 @@
 using StaticArrays
 
-export @sko_str, @skb_str
+export @sko_str, @skb_str, SKOrbital, SKBond
 
 # part of SlaterKoster.jl
 
@@ -44,11 +44,11 @@ end
 * `get_l(::Union{Symbol, Char, AbstractString})` : uses `Dict` lookup
 * `get_l(::Val{*})` where `*` is a symbol : uses static dispatch (zero overhead)
 """
-get_l(s::Union{Symbol, Char, AbstractString}) = _orb_to_L[Symbol(s)]
+get_l(s::Union{Symbol, Char}) = _orb_to_L[Symbol(s)]
+get_l(s::AbstractString) = _orb_to_L[Symbol(s[end])]
 
 for (sym, val) in _orb_to_L
    "get_l(::Val{:$sym}) = $val" |> Meta.parse |> eval
-   # eval( :( get_l(::Val{$sym}) = $val ) )
 end
 
 """
@@ -73,31 +73,31 @@ the letter. E.g., the following are admissible descriptions:
 ```
    "s", "p", "1s", "2s", ...
 ```
+only the last letter will be used in determining the type of orbital
 """
-struct SKOrbital{S, N}
-   valS::Val{S}   # symbol of the orbital
-   valN::Val{N}   # shell index
+struct SKOrbital{S}
+   valS::Val{S}     # symbol of the orbital
+   l::Int           # l-value
+   str::String      # description
+   idx::Int         # orbital index
 end
 
-Base.String(o::SKOrbital{S, N}) where {S, N} = replace("sk:$N$S", "0" => "")
+Base.String(o::SKOrbital) = "sk:" * o.str
 
 Base.show(io::IO, o::SKOrbital) = write(io, String(o))
 
-function SKOrbital(str)
+function SKOrbital(str, idx::Integer = 0)
    @assert 1 <= length(str) <= 2
    @assert Symbol(str[end]) in allowed_orbitals()
-   if length(str) == 1
-      n = 0
-   else
-      n = parse(Int64, str[1])
-   end
-   return SKOrbital(Val(Symbol(str[end])), Val(n))
+   return SKOrbital(Val(Symbol(str[end])), get_l(str), str, idx)
 end
+
+SKOrbital(o::SKOrbital, idx::Integer) = SKOrbital(o.valS, o.l, o.str, idx) 
 
 macro sko_str(str) SKOrbital(str) end
 
-get_l(o::SKOrbital) = get_l(o.valS)
-get_idx(o::SKOrbital{S,N}) where {S,N} = N
+get_l(o::SKOrbital) = o.l # get_l(o.valS)
+get_idx(o::SKOrbital) = o.idx
 bondtypes(o1::SKOrbital, o2::SKOrbital) = bondtypes(get_l(o1), get_l(o2))
 
 # import Base.==
@@ -110,14 +110,13 @@ isless(o1::SKOrbital, o2::SKOrbital) = (
 # ----------------------------------------------------------------------------
 #    Bond Implementation
 
-struct SKBond{O1,O2,SYM,N1,N2}
-   o1::SKOrbital{O1, N1}
-   o2::SKOrbital{O2, N2}
+struct SKBond{O1,O2,SYM}
+   o1::SKOrbital{O1}
+   o2::SKOrbital{O2}
    valSYM::Val{SYM}
 end
 
-Base.String(b::SKBond{O1,O2,SYM,N1,N2}) where {O1,O2,SYM,N1,N2} =
-      replace("sk:$N1$O1$N2$O2$SYM", "0" => "")
+Base.String(b::SKBond{O1,O2,SYM}) where {O1,O2,SYM} = "sk:$O1$O2$SYM"
 
 Base.show(io::IO, b::SKBond) = write(io, String(b))
 
@@ -137,9 +136,7 @@ function SKBond(str)
    @assert o1 in allowed_orbitals()
    @assert o2 in allowed_orbitals()
    @assert sym in allowed_bonds()
-   return SKBond(SKOrbital(Val(o1), Val(n1)),
-                 SKOrbital(Val(o2), Val(n2)),
-                 Val(sym))
+   return SKBond(SKOrbital(String(o1)), SKOrbital(String(o2)), Val(sym))
 end
 
 function SKBond(o1::SKOrbital, o2::SKOrbital, sym::Symbol)
@@ -174,69 +171,14 @@ sksignt(l1, l2) = sksign(l2, l1)
 sksign(b::SKBond) = sksign(get_l(b)...)
 sksignt(b::SKBond) = sksignt(get_l(b)...)
 
-# ----------------------------
-#  OLD STUFF TO BE DELETED
-
-
-#
-# """
-# `bondintegral_index` :
-#
-#  1 ssσ  -> (0, 0, 0) = (l1, l2, M) -> 1
-#  2 psσ
-#  3 ppσ
-#  4 ppπ
-#  5 dsσ
-#  6 dpσ
-#  7 dpπ
-#  8 ddσ
-#  9 ddπ
-# 10 ddδ
-#
-# TODO: there must be a cleverer implementation of this!
-# """
-# function bondintegral_index(l1, l2, sym)
-#    if l1 < l2
-#       l1, l2 = l2, l1
-#    end
-#    @assert sym <= max_symbol_idx(l1, l2)
-#
-#    idx = 0
-#    for _l1 = 0:l1, _l2 = 0:_l1, _sym = 0:max_symbol_idx(_l1, _l2)
-#       idx += 1
-#       if (_l1, _l2, _sym) == (l1, l2, sym)
-#          return idx
-#       end
-#    end
-#    @error("we shouldn't be here!")
-# end
-#
-# """
-# `orbital_index(l::Integer, m::Integer)` : old indexing implementation for
-# compatibility! Should move to `OrbitalIndices`.
-#
-#      l  m
-# s    0  0    -> 1
-# pz   1  -1   -> 2
-# py   1  0    -> 3
-# px   1   1   -> 4
-# ...
-#
-# TODO: there must be a cleverer implementation of this!
-# """
-# function orbital_index(l::Integer, m::Integer)
-#    @assert abs(m) <= l
-#    idx = 0
-#    for _l = 0:l, _m = -_l:_l
-#       idx += 1
-#       if (_l, _m) == (l, m)
-#          return idx
-#       end
-#    end
-#    @error("we shouldn't be here!")
-# end
-
-
+"""
+`SKModel` : Most general Slater-Koster Tight-Binding model supertype.
+"""
 abstract type SKModel end
 
+"""
+`TwoCentreModel` : abstract subtype of `SKModel` from which all
+2-centre models should be derived, for simplified assembly of
+the hamiltonians.
+"""
 abstract type TwoCentreModel <: SKModel end
