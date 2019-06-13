@@ -69,7 +69,7 @@ for n = 1:5
    U = rand(3) .- 0.5
    U /= norm(U)
    Hnew = sk2cart_d(H, U, V)
-   Hold = sk2cart(H, U, V)
+   Hold = SK.OldSK.sk4!(U, V, zeros(4,4))
    perm = [1,3,4,2]
    println(@test Hnew ≈ Hold[perm, perm])
 end

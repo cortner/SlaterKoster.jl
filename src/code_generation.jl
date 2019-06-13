@@ -31,7 +31,7 @@ _fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 """
 `wigner_d(l, m, M, θ)` : Numerical calculation for Wigner d-function
  
- Following Michael's latex notes but using Eq.7 in PRB 72 165108 (2005). 
+ Following Eq.7 in PRB 72 165108 (2005). 
 
 """
 function wigner_d(l, m, mp, θ)
@@ -58,6 +58,42 @@ function wigner_d(l, m, mp, θ)
        pow1 = (l-k-p)/2
        pow2 = (k+p)/2
        rtn_sum += (-1)^k * (1.0 - cosb)^pow1 * (1.0 - cosb)^pow2 / fcm2
+    end
+    rtn_sum *= fcm1
+
+    return rtn_sum
+end
+
+"""
+`small_d(l, m, M, θ)` : Numerical calculation for Wigner small d-function
+ 
+ Following Michael's lateX notes. 
+
+"""
+function small_d(l, m, mp, θ)
+    fc1 = factorial(l+m)
+    fc2 = factorial(l-m)
+    fc3 = factorial(l+mp)
+    fc4 = factorial(l-mp)
+    fcm1 = sqrt(fc1 * fc2 * fc3 * fc4)
+  
+    cosb = spcos(θ / 2.0)
+    sinb = spsin(θ / 2.0)
+
+    p = m - mp
+    lo = max(0,p)
+    hi = min(0,l+m,l-mp)
+   
+    rtn_sum = 0.0
+    for k = lo:hi
+       fc5 = factorial(k)
+       fc6 = factorial(l+m-k)
+       fc7 = factorial(l-mp-k)
+       fc8 = factorial(k-p)
+       fcm2 = fc5 * fc6 * fc7 * fc8
+       pow1 = 2 * l - 2 * k + p
+       pow2 = 2 * k - p
+       rtn_sum += (-1)^(k+p) * cosb^pow1 * sinb^pow2 / fcm2
     end
     rtn_sum *= fcm1
 
@@ -190,7 +226,7 @@ function Gsym_d(l1, l2, m1, m2, sym)
    B(m, φ) = ( (m == 0) ? 0 :
                (-1)^m * (τ(-m) * spcos(abs(m)*φ) - τ(m) * spsin(abs(m)*φ) ) )
 
-   rot(l, m, sym, θ) = wigner_d(l, m, sym, θ)
+   rot(l, m, sym, θ) = small_d(l, m, sym, θ)
 
    S(l, m, sym, φ, θ) = A(m, φ) * ( (-1)^sym * rot(l, abs(m),  sym, θ)
                                              + rot(l, abs(m), -sym, θ) )
