@@ -1,5 +1,5 @@
 using StaticArrays
-
+using SlaterKoster: get_l, get_bidx, bond_to_idx
 
 export @skh_str, SKH
 
@@ -135,6 +135,21 @@ end
 """
 todo doc
 """
-function cart2sk(H::SKH, U, E::AbstractMatrix)
+function cart2sk(H::SKH, U, E::AbstractArray)
    φ, θ = carttospher(U[1], U[2], U[3])
+   V = zeros(length(H.bonds))
+   for (I, (b, (io1, io2))) in enumerate(zip(H.bonds, H.b2o))
+      M12 = CodeGeneration.sk_gen(b, φ, θ)
+      I1 = H.locorbidx[io1]
+      I2 = H.locorbidx[io2]
+      bidx = get_bidx(b)
+      if bidx > 0
+         V[I] += 0.5 * sum(sksign(b) * E[I1, I2] .* M12) 
+      else
+         V[I] += sum(sksign(b) * E[I1, I2] .* M12) 
+      end
+   end
+   return V
 end
+
+

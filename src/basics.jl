@@ -1,6 +1,6 @@
 using StaticArrays
 
-export @sko_str, @skb_str, SKOrbital, SKBond
+export @sko_str, @skb_str, SKOrbital, SKBond, get_l, bond_to_idx
 
 # part of SlaterKoster.jl
 

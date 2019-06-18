@@ -4,7 +4,7 @@
 @info("Slater Koster Core Tests...")
 using SlaterKoster, Test, LinearAlgebra
 import SlaterKoster.CodeGeneration
-using SlaterKoster: SKH, sk2cart, allbonds, nbonds
+using SlaterKoster: SKH, sk2cart, cart2sk, allbonds, nbonds
 
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
@@ -59,6 +59,34 @@ for n = 1:5
    Hold = SK.OldSK.sk9!(U, V, zeros(9,9))
    perm = [1,3,4,2,5,6,9,7,8]
    println(@test Hnew ≈ Hold[perm, perm])
+end
+
+@info("sk2cart to cart2sk : sp")
+orbitals = [sko"s", sko"p"]
+H = SKH(orbitals) # generate bonds automatically
+println(@test bonds == allbonds(orbitals))
+H = SKH("sp")
+for n = 1:5
+   V = rand(nbonds(H))
+   U = rand(3) .- 0.5
+   U /= norm(U)
+   Hnew = sk2cart(H, U, V)
+   Vnew = cart2sk(H, U, Hnew)
+   println(@test V ≈ Vnew)
+end
+
+@info("sk2cart to cart2sk : spd")
+orbitals = [sko"s", sko"p", sko"d"]
+H = SKH(orbitals) # generate bonds automatically
+println(@test H == SKH("spd"))
+H = SKH("spd")
+for n = 1:5
+   V = rand(nbonds(H))
+   U = rand(3) .- 0.5
+   U /= norm(U)
+   Hnew = sk2cart(H, U, V)
+   Vnew = cart2sk(H, U, Hnew)
+   println(@test V ≈ Vnew)
 end
 
 end
