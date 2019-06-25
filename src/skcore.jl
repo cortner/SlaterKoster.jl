@@ -30,7 +30,7 @@ struct SKH{SIGN}
    sig::Type{SIGN}
 end
 
-Base.String(H::SKH) = "sk:" * prod(String(o)[4:end] for o in H.orbitals)
+Base.String(H::SKH) = ("sk:" * prod((o.str*":") for o in H.orbitals))[1:end-1]
 
 Base.show(io::IO, H::SKH) = write(io, String(H))
 
@@ -49,10 +49,12 @@ function allbonds(orbitals::Vector{<: SKOrbital})
    @assert issorted(orbitals)
    norb = length(orbitals)
    bonds = SKBond[]
+   idx = 0
    for i1 = 1:norb, i2 = i1:norb
       o1, o2 = orbitals[i1], orbitals[i2]
       for sym in bondtypes(o1, o2)
-         push!(bonds, SKBond(o1, o2, sym))
+         idx += 1
+         push!(bonds, SKBond(o1, o2, sym, idx))
       end
    end
    return sort(bonds)
@@ -144,12 +146,10 @@ function cart2sk(H::SKH, U, E::AbstractArray)
       I2 = H.locorbidx[io2]
       bidx = get_bidx(b)
       if bidx > 0
-         V[I] += 0.5 * sum(sksign(b) * E[I1, I2] .* M12) 
+         V[I] += 0.5 * sum(sksign(b) * E[I1, I2] .* M12)
       else
-         V[I] += sum(sksign(b) * E[I1, I2] .* M12) 
+         V[I] += sum(sksign(b) * E[I1, I2] .* M12)
       end
    end
    return V
 end
-
-
