@@ -82,6 +82,7 @@ struct SKOrbital{S}
    idx::Int         # orbital index
 end
 
+
 Base.String(o::SKOrbital) = "SKOrbital(" * o.str * ", $(o.idx))"
 # Base.String(o::SKOrbital) = "sk:" * o.str
 
@@ -92,6 +93,10 @@ function SKOrbital(str, idx::Integer = 0)
    @assert Symbol(str[end]) in allowed_orbitals()
    return SKOrbital(Val(Symbol(str[end])), get_l(str), str, idx)
 end
+
+index(O::AbstractVector{<:SKOrbital}) =
+   [ SKOrbital(o.str, i) for (i, o) in enumerate(O) ]
+
 
 macro sko_str(str) SKOrbital(str) end
 
@@ -120,6 +125,9 @@ struct SKBond{O1,O2,SYM}
    idx::Int
    valSYM::Val{SYM}
 end
+
+index(B::AbstractVector{<:SKBond}) =
+   [ SKBond(b.o1, b.o2, i, b.valSYM) for (i, b) in enumerate(B) ]
 
 Base.String(b::SKBond{O1,O2,SYM}) where {O1,O2,SYM} =
    "SKBond($O1$O2$SYM, $(b.idx))"
@@ -153,6 +161,8 @@ function SKBond(str)
    @assert sym in allowed_bonds()
    return SKBond(SKOrbital(String(o1)), SKOrbital(String(o2)), 0, Val(sym))
 end
+
+
 
 function SKBond(o1::SKOrbital, o2::SKOrbital, sym::Symbol, idx=0)
    @assert sym in allowed_bonds()

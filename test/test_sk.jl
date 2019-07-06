@@ -4,7 +4,7 @@
 @info("Slater Koster Core Tests...")
 using SlaterKoster, Test, LinearAlgebra
 import SlaterKoster.CodeGeneration
-using SlaterKoster: SKH, sk2cart, cart2sk, allbonds, nbonds
+using SlaterKoster: SKH, sk2cart, cart2sk, allbonds, nbonds, index
 
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
@@ -31,7 +31,7 @@ println()
 
 @info("New implementation: sp")
 orbitals = [sko"s", sko"p"]
-bonds = [skb"ssσ", skb"spσ", skb"ppσ", skb"ppπ"]
+bonds = index([skb"ssσ", skb"spσ", skb"ppσ", skb"ppπ"])
 println(@test bonds == allbonds(orbitals))
 # H = SKH(orbitals, bonds)   # TODO: need to fix this test somehow!!! (or drop it)
 # println(@test H == SKH("sp"))

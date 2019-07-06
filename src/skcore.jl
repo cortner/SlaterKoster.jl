@@ -46,7 +46,6 @@ norbitals(H::SKH) = length(H.orbitals)
 `SKOrbital`s in the list `orbitals` and return as `Vector`.
 """
 function allbonds(orbitals::Vector{<: SKOrbital})
-   @assert issorted(orbitals)
    norb = length(orbitals)
    bonds = SKBond[]
    idx = 0
@@ -57,15 +56,13 @@ function allbonds(orbitals::Vector{<: SKOrbital})
          push!(bonds, SKBond(o1, o2, sym, idx))
       end
    end
-   return sort(bonds)
+   return bonds
 end
 
 
 function SKH(orbitals::AbstractVector{<: SKOrbital},
              bonds::AbstractVector{<: SKBond},
              sig = StandardSigns)
-   # check the orbitals have the correct ordering
-   @assert issorted(orbitals)
    # construct local orbital -> index mapping
    locorbidx = Vector{Int}[]
    idx = 0
