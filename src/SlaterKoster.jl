@@ -12,7 +12,7 @@ using Reexport
 #  (5) fast derivatives
 
 # my old codes from the previous TB package
-include("oldsk.jl")
+#include("oldsk.jl")
 
 # basic SK machinery
 include("basics.jl")
