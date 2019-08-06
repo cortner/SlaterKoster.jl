@@ -196,6 +196,24 @@ sksignt(l1, l2) = sksign(l2, l1)
 sksign(b::SKBond) = sksign(get_l(b)...)
 sksignt(b::SKBond) = sksignt(get_l(b)...)
 
+#FHISigns
+function sksignmat(l1, l2)
+   l1_len = 2 * l1 + 1
+   l2_len = 2 * l2 + 1
+   M = ones(l1_len, l2_len)
+   for i=1:l1_len
+      for j=1:l2_len
+         M[i,j] *= sksign(i - l1 - 1, 0)
+         M[i,j] *= sksign(j - l2 - 1, 0)
+      end
+   end
+   return M
+end
+
+sksignmatt(l1, l2) = sksignmat(l2, l1)
+sksignmat(b::SKBond) = sksignmat(get_l(b)...)
+sksignmatt(b::SKBond) = sksignmatt(get_l(b)...)
+
 """
 `SKModel` : Most general Slater-Koster Tight-Binding model supertype.
 """
