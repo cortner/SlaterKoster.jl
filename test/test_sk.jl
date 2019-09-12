@@ -89,11 +89,11 @@ for n = 1:5
    println(@test V ≈ Vnew)
 end
 
-@info("sk2cart to cart2sk : spsp")
-orbitals = [sko"s", sko"p", sko"s", sko"p"]
+@info("sk2cart to cart2sk : sspp")
+orbitals = [sko"s", sko"s", sko"p", sko"p"]
 H = SKH(orbitals) # generate bonds automatically
-println(@test H == SKH("spsp"))
-H = SKH("spsp")
+println(@test H == SKH("sspp"))
+H = SKH("sspp")
 for n = 1:5
    V = rand(nbonds(H))
    U = rand(3) .- 0.5
@@ -107,67 +107,45 @@ end
 
 alloc_block(H::SKH) = zeros(max_locidx(H::SKH), max_locidx(H::SKH))
 
-#@info("cart2sk to sk2cart : sp")
-#orbitals = [sko"s", sko"p"]
-#H = SKH(orbitals) # generate bonds automatically
-#println(@test H == SKH("sp"))
-#H = SKH("sp")
+@info("cart2sk to sk2cart : sp")
+orbitals = [sko"s", sko"p"]
+H = SKH(orbitals) # generate bonds automatically
+println(@test H == SKH("sp"))
+H = SKH("sp")
+for n = 1:5
+   HE = alloc_block(H)
+   for i=1:max_locidx(H)
+      for j=i:max_locidx(H)
+         HE[i,j] = rand(1)[1]
+         if i != j
+            HE[j,i] = HE[i,j]
+         end
+      end
+   end
+   U = rand(3) .- 0.5
+   U /= norm(U)
+   V = cart2sk(H, U, HE)
+   Hnew = sk2cart(H, U, V)
+   Vnew = cart2sk(H, U, Hnew)
+   println(norm(HE - Hnew, Inf))
+   println(@test V ≈ Vnew)
+   println(@test HE ≈ Hnew)
+end
+
+@info("sk2cart vs sk2cart_num : spspd")
+orbitals = [sko"s", sko"p", sko"s", sko"p", sko"d"]
+H = SKH(orbitals) # generate bonds automatically
+println(@test H == SKH("spspd"))
+H = SKH("spspd")
 #for n = 1:5
-#   HE = alloc_block(H)
-#   for i=1:max_locidx(H)
-#      for j=i:max_locidx(H)
-#         HE[i,j] = rand(1)[1]
-#         if i != j
-#            HE[j,i] = HE[i,j]
-#         end
-#      end
-#   end
-#   U = rand(3) .- 0.5
-#   U /= norm(U)
-#   V = cart2sk(H, U, HE)
-#   Hnew = sk2cart(H, U, V)
-#   Vnew = cart2sk(H, U, Hnew)
-#   println(norm(HE - Hnew, Inf))
-#   println(@test V ≈ Vnew)
-#   #println(@test HE ≈ Hnew)
-#end
+V = rand(nbonds(H))
+U = rand(3) .- 0.5
+U /= norm(U)
+Hnew = sk2cart(H, U, V)
+Hnew2 = sk2cart_num(H, U, V)
+println(@test Hnew ≈ Hnew2)
 
-#@info("sk2cart vs sk2cart_num : spspd")
-#orbitals = [sko"s", sko"p", sko"s", sko"p", sko"d"]
-#H = SKH(orbitals) # generate bonds automatically
-#println(@test H == SKH("spspd"))
-#H = SKH("spspd")
-##for n = 1:5
-#V = rand(nbonds(H))
-#U = rand(3) .- 0.5
-#U /= norm(U)
-#Hnew = sk2cart(H, U, V)
-#Hnew2 = sk2cart_num(H, U, V)
-#println(@test Hnew ≈ Hnew2)
-##end
-
-#@info("cart2sk vs cart2sk_num : spspd")
-#orbitals = [sko"s", sko"p", sko"s", sko"p", sko"d"]
-#H = SKH(orbitals) # generate bonds automatically
-#println(@test H == SKH("spspd"))
-#H = SKH("spspd")
-#HE = alloc_block(H)
-#for i=1:max_locidx(H)
-#   for j=i:max_locidx(H)
-#      HE[i,j] = rand(1)[1]
-#      if i != j
-#         HE[j,i] = HE[i,j]
-#      end
-#   end
-#end
-#U = rand(3) .- 0.5
-#U /= norm(U)
-#V = cart2sk(H, U, HE)
-#Vnew = cart2sk_num(H, U, HE)
-#println(@test V ≈ Vnew)
-#println(@test HE ≈ Hnew)
-
-@info("cart2sk_H vs sk2cart_H : spspd")
+@info("cart2sk vs cart2sk_num : spspd")
 orbitals = [sko"s", sko"p", sko"s", sko"p", sko"d"]
 H = SKH(orbitals) # generate bonds automatically
 println(@test H == SKH("spspd"))
@@ -183,12 +161,8 @@ for i=1:max_locidx(H)
 end
 U = rand(3) .- 0.5
 U /= norm(U)
-HH = cart2sk_H(H, U, HE)
-HEnew = sk2cart_H(H, U, HH)
-V = H2V(H, HH)
-#HHnew = V2H(H, V)
-Hnew = sk2cart(H, U, V)
-println(@test HE ≈ Hnew)
-println(@test HE ≈ HEnew)
+V = cart2sk(H, U, HE)
+Vnew = cart2sk_num(H, U, HE)
+println(@test V ≈ Vnew)
 
 end
