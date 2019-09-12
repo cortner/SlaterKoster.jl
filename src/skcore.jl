@@ -50,8 +50,9 @@ of $H$ may not have symmetries for the orbitals. For example,
 $V_{spσ} != V_{psσ}$, where $V$ is the value of the bond 
 after SK tranformation (see `cart2sk`) because $H_{spσ} != H_{psσ}$.
 
-The loop of `for i1 = 1:norb, i2 = i1:norb` is changed to
-            `for i1 = 1:norb, i2 = 1:norb`  here.
+The change in this branch for orbitals:
+  `for i1 = 1:norb, i2 = i1:norb` is changed to
+  `for i1 = 1:norb, i2 = 1:norb`  here.
 
 """
 function allbonds(orbitals::Vector{<: SKOrbital})
