@@ -172,7 +172,6 @@ function Gsym(l1, l2, m1, m2, sym)
    end
 
    #expr = expr.simplify()
-   #expr = sksign(l1, l2) * expr
 
    # x, y, z = sympy.symbols("x y z")
    # expr = expr.simplify()

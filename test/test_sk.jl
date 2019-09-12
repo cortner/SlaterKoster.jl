@@ -4,7 +4,7 @@
 @info("Slater Koster Core Tests...")
 using SlaterKoster, Test, LinearAlgebra
 import SlaterKoster.CodeGeneration
-using SlaterKoster: SKH, sk2cart, cart2sk, sk2cart_num, cart2sk_num, cart2sk_H, sk2cart_H, H2V, V2H, allbonds, nbonds, max_locidx
+using SlaterKoster: SKH, sk2cart, cart2sk, sk2cart_num, cart2sk_num, allbonds, nbonds, max_locidx
 
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
