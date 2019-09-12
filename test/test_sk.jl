@@ -4,7 +4,7 @@
 @info("Slater Koster Core Tests...")
 using SlaterKoster, Test, LinearAlgebra
 import SlaterKoster.CodeGeneration
-using SlaterKoster: SKH, sk2cart, cart2sk, sk2cart_num, cart2sk_num, cart2sk_H, sk2cart_H, H2V, V2H, allbonds, nbonds, index, max_locidx
+using SlaterKoster: SKH, sk2cart, cart2sk, sk2cart_num, cart2sk_num, allbonds, nbonds, index, max_locidx
 
 SK = SlaterKoster
 CG = SlaterKoster.CodeGeneration
@@ -104,7 +104,7 @@ for n = 1:5
    println(@test V ≈ Vnew)
 end
 
-@info("cart2sk_H vs sk2cart_H : spspd")
+@info("cart2sk vs sk2cart : spspd")
 orbitals = [sko"s", sko"p", sko"s", sko"p", sko"d"]
 H = SKH(orbitals) # generate bonds automatically
 println(@test H == SKH("spspd"))
@@ -120,12 +120,8 @@ for i=1:max_locidx(H)
 end
 U = rand(3) .- 0.5
 U /= norm(U)
-HH = cart2sk_H(H, U, HE)
-HEnew = sk2cart_H(H, U, HH)
-V = H2V(H, HH)
-#HHnew = V2H(H, V)
+V = cart2sk(H, U, HE)
 Hnew = sk2cart(H, U, V)
 println(@test HE ≈ Hnew)
-println(@test HE ≈ HEnew)
 
 end
