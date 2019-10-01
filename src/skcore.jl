@@ -43,22 +43,11 @@ norbitals(H::SKH) = length(H.orbitals)
 """
 `allbonds(orbitals)` : compute all the `SKBond`s between any two
 `SKOrbital`s in the list `orbitals` and return as `Vector`.
-
-In this branch, bond generation is modified to match full 
-orbital combinations. The reason to do this is that sub-block 
-of $H$ may not have symmetries for the orbitals. For example, 
-$V_{spσ} != V_{psσ}$, where $V$ is the value of the bond 
-after SK tranformation (see `cart2sk`) because $H_{spσ} != H_{psσ}$.
-
-The change in this branch for orbitals:
-  `for i1 = 1:norb, i2 = i1:norb` is changed to
-  `for i1 = 1:norb, i2 = 1:norb`  here.
-
 """
 function allbonds(orbitals::Vector{<: SKOrbital})
    norb = length(orbitals)
    bonds = SKBond[]
-   for i1 = 1:norb, i2 = 1:norb
+   for i1 = 1:norb, i2 = i1:norb
       o1, o2 = orbitals[i1], orbitals[i2]
       for sym in bondtypes(o1, o2)
          push!(bonds, SKBond(o1, o2, sym))
@@ -86,7 +75,7 @@ function SKH(orbitals::AbstractVector{<: SKOrbital},
       i1 = findfirst(o -> o == b.o1, orbitals)
       i2 = findfirst(o -> o == b.o2, orbitals)
       # insist on an ordering convention
-      @assert i1 <= i2
+      #@assert i1 <= i2
       push!(b2o, (i1, i2))
    end
    return SKH(orbitals, bonds, b2o, locorbidx, sig)
@@ -127,6 +116,7 @@ Hamiltonians.
 function sk2cart(H::SKH, R, V)
    φ, θ = carttospher(R[1], R[2], R[3])
    E = alloc_block(H)
+   println(" ")
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
       G12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
@@ -175,7 +165,6 @@ todo doc
 function cart2sk(H::SKH, R, E::AbstractArray)
    φ, θ = carttospher(R[1], R[2], R[3])
    V = zeros(length(H.bonds))
-   #HH = zeros(size(E))
    for (I, (b, (io1, io2))) in enumerate(zip(H.bonds, H.b2o))
       G12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
@@ -194,7 +183,6 @@ end
 function cart2sk_FHIaims(H::SKH, R, E::AbstractArray)
    φ, θ = carttospher(R[1], R[2], R[3])
    V = zeros(length(H.bonds))
-   #HH = zeros(size(E))
    for (I, (b, (io1, io2))) in enumerate(zip(H.bonds, H.b2o))
       G12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
@@ -213,7 +201,6 @@ end
 function cart2sk_num(H::SKH, R, E::AbstractArray)
    φ, θ = carttospher(R[1], R[2], R[3])
    V = zeros(length(H.bonds))
-   #HH = zeros(size(E))
    for (I, (b, (io1, io2))) in enumerate(zip(H.bonds, H.b2o))
       G12 = CodeGeneration.sk_num(b, φ, θ)
       I1 = H.locorbidx[io1]
