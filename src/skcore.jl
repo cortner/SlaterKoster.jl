@@ -75,7 +75,6 @@ function SKH(orbitals::AbstractVector{<: SKOrbital},
       i1 = findfirst(o -> o == b.o1, orbitals)
       i2 = findfirst(o -> o == b.o2, orbitals)
       # insist on an ordering convention
-      #@assert i1 <= i2
       push!(b2o, (i1, i2))
    end
    return SKH(orbitals, bonds, b2o, locorbidx, sig)
