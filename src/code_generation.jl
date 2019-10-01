@@ -28,8 +28,6 @@ _lookupkey(l1, l2, m1, m2, sym) = "$l1,$l2,$m1,$m2,$sym"
 _fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 
 """
-
-"""
 `small_d(l, m, M, θ)` : Numerical calculation for Wigner small d-function
 """
 function small_d(l, m, mp, θ)
