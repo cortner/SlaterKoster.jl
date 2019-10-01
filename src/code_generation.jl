@@ -28,8 +28,9 @@ _lookupkey(l1, l2, m1, m2, sym) = "$l1,$l2,$m1,$m2,$sym"
 _fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 
 """
-`small_d(l, m, M, θ)` : Numerical calculation for Wigner small d-function
 
+"""
+`small_d(l, m, M, θ)` : Numerical calculation for Wigner small d-function
 """
 function small_d(l, m, mp, θ)
     fc1 = factorial(l+m)
@@ -147,14 +148,13 @@ function Gsym(l1, l2, m1, m2, sym)
    return py2jlcode(expr.__str__())
 end
 
-
 function py2jlcode(str)
    # replace some symbols to turn python into julia code
    str = replace(str, "**" => "^")
    # φ : Azithmuthal coordinate
    str = replace(str, "phi" => "φ")   # the python code uses alpha here
    # θ : Polar angle
-   str = replace(str, "theta" => "θ")   # the python code uses alpha here
+   str = replace(str, "theta" => "θ")   # the python code uses beta here
 end
 
 

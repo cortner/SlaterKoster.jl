@@ -12,16 +12,14 @@ RETURNS: The corresponding polar coordinates - radial, azimuthal, polar.
 """
 function carttospher(x,y,z)
    r = sqrt(x*x+y*y+z*z)
-   β = acos(z/r)
+   θ = acos(z/r)
    if x != 0
-      α = atan(y, x)
+      φ = atan(y, x)
    else
-      α = sign(y) * π/2
+      φ = sign(y) * π * 0.5
    end
-   return α, β
+   return φ, θ
 end
-
-
 
 struct SKH{SIGN}
    orbitals::Vector{SKOrbital}    # this should become a `species => orbitals` list
@@ -78,7 +76,6 @@ function SKH(orbitals::AbstractVector{<: SKOrbital},
       i1 = findfirst(o -> o == b.o1, orbitals)
       i2 = findfirst(o -> o == b.o2, orbitals)
       # insist on an ordering convention
-      @assert i1 <= i2
       push!(b2o, (i1, i2))
    end
    return SKH(orbitals, bonds, b2o, locorbidx, sig)
@@ -119,6 +116,7 @@ Hamiltonians.
 function sk2cart(H::SKH, R, V)
    φ, θ = carttospher(R[1], R[2], R[3])
    E = alloc_block(H)
+   println(" ")
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
       G12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
@@ -161,6 +159,35 @@ function sk2cart_num(H::SKH, R, V)
    return E
 end
 
+function sk2cart_FHIaims(H::SKH, R, V)
+   φ, θ = carttospher(R[1], R[2], R[3])
+   E = alloc_block(H)
+   for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+      G12 = CodeGeneration.sk_gen(b, φ, θ)
+      I1 = H.locorbidx[io1]
+      I2 = H.locorbidx[io2]
+      E[I1, I2] .+= (sksign(b) * Vb) * G12 .* sksignmat(b)
+      if io1 != io2
+         E[I2, I1] .+= sksignt(b) * Vb * G12' .* sksignmatt(b)
+      end
+   end
+   return E
+end
+
+function sk2cart_num(H::SKH, R, V)
+   φ, θ = carttospher(R[1], R[2], R[3])
+   E = alloc_block(H)
+   for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+      G12 = CodeGeneration.sk_num(b, φ, θ)
+      I1 = H.locorbidx[io1]
+      I2 = H.locorbidx[io2]
+      E[I1, I2] .+= (sksign(b) * Vb) * G12
+      if io1 != io2
+         E[I2, I1] .+= sksignt(b) * Vb * G12'
+      end
+   end
+   return E
+end
 
 """
 todo doc
@@ -172,12 +199,12 @@ function cart2sk(H::SKH, R, E::AbstractArray)
       G12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
       I2 = H.locorbidx[io2]
-      bidx = get_bidx(b)
+      b_l = get_bidx(b) # bond symbol to L
       val = sum(sksign(b) * E[I1, I2] .* G12) 
-      if bidx > 0
-         V[I] += 0.5 * val
-      else
-         V[I] += val
+      if b_l > 0 # for bonds other than 's' or l>0
+            V[I] += 0.5 * val 
+      else # for 's' bond or l=0
+            V[I] += val 
       end
    end
    return V
@@ -186,7 +213,6 @@ end
 function cart2sk_FHIaims(H::SKH, R, E::AbstractArray)
    φ, θ = carttospher(R[1], R[2], R[3])
    V = zeros(length(H.bonds))
-   #HH = zeros(size(E))
    for (I, (b, (io1, io2))) in enumerate(zip(H.bonds, H.b2o))
       G12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
@@ -205,7 +231,6 @@ end
 function cart2sk_num(H::SKH, R, E::AbstractArray)
    φ, θ = carttospher(R[1], R[2], R[3])
    V = zeros(length(H.bonds))
-   #HH = zeros(size(E))
    for (I, (b, (io1, io2))) in enumerate(zip(H.bonds, H.b2o))
       G12 = CodeGeneration.sk_num(b, φ, θ)
       I1 = H.locorbidx[io1]
