@@ -28,46 +28,9 @@ _lookupkey(l1, l2, m1, m2, sym) = "$l1,$l2,$m1,$m2,$sym"
 _fname_sktable() = joinpath(@__DIR__(), "sktable.json")
 
 """
-`wigner_d(l, m, M, θ)` : Numerical calculation for Wigner d-function
- 
- Following Eq.7 in PRB 72 165108 (2005). 
-
-"""
-function wigner_d(l, m, mp, θ)
-    fc1 = factorial(l+m)
-    fc2 = factorial(l-m)
-    fc3 = factorial(l+mp)
-    fc4 = factorial(l-mp)
-    fcm1 = sqrt(fc1 * fc2 * fc3 * fc4)
-    fcm1 = 2.0^(-l) * (-1)^(l-mp) * fcm1
-  
-    cosb = cos(θ)
-
-    p = m+mp
-    lo = max(0,-p)
-    hi = min(l-m,l-mp)
-   
-    rtn_sum = 0.0
-    for k = lo:hi
-       fc5 = factorial(k)
-       fc6 = factorial(l-m-k)
-       fc7 = factorial(l-mp-k)
-       fc8 = factorial(p+k)
-       fcm2 = fc5 * fc6 * fc7 * fc8
-       pow1 = (l-k-p)/2
-       pow2 = (k+p)/2
-       rtn_sum += (-1)^k * (1.0 - cosb)^pow1 * (1.0 - cosb)^pow2 / fcm2
-    end
-    rtn_sum *= fcm1
-
-    return rtn_sum
-end
 
 """
 `small_d(l, m, M, θ)` : Numerical calculation for Wigner small d-function
- 
- Following Michael's notes. 
-
 """
 function small_d(l, m, mp, θ)
     fc1 = factorial(l+m)
@@ -120,7 +83,7 @@ function sk_table(L::Integer)
 
    # create a new lookup table
    tbl = Dict{String, Any}("L" => L)
-   for l1 = 0:L, l2=l1:L, m1=-l1:l1, m2=-l2:l2
+   for l1 = 0:L, l2=0:L, m1=-l1:l1, m2=-l2:l2
       for sym = 0:max_symbol_idx(l1,l2)
          tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym(l1,l2,m1,m2,sym)
       end
@@ -245,38 +208,6 @@ function sk_num(::SKBond{O1, O2, SYM}, φ, θ) where {O1, O2, SYM}
    b_l = get_bidx(Val{SYM}())
    for (mj, m2) = enumerate(-l2:l2), (mi, m1) = enumerate(-l1:l1)
       E[mi, mj] = Gnum(l1, l2, m1, m2, b_l, φ, θ) 
-   end
-   return E
-end
-
-
-# Rotating Hamiltonian Matrix to match the original structure's orientation
-
-Φ(m,x) = (m == 0) ? 1 : (m > 0) ? sqrt(2) * cos(m*x) : sqrt(2) * sin(abs(m)*x)
-
-d_A(l, m, sym, θ) = small_d(l, abs(m), abs(sym), θ)
-
-d_B(l, m, sym, θ) = (-1)^m * small_d(l, abs(m), -abs(sym), θ)
-
-Δ(l, m, sym, φ, θ) = 0.5 * ( (sign(sym) * Φ(m,φ)  * Φ(sym,0)
-                              * (d_A(l, m, sym, θ) + d_B(l, m, sym, θ)))
-                            -(sign(m)   * Φ(-m,φ) * Φ(-sym,0)
-                              * (d_A(l, m, sym, θ) - d_B(l, m, sym, θ))) )
-
-function sk_num_rot(::SKBond{O1, O2, SYM}, φ, θ) where {O1, O2, SYM}
-   l1, l2 = get_l(Val{O1}()), get_l(Val{O2}())
-   E = zeros(length(-l1:l1),length(-l2:l2))
-   delta1 = zeros(length(-l1:l1))
-   delta2 = zeros(length(-l2:l2))
-   b_l = get_bidx(Val{SYM}())
-   for (mi, m1) = enumerate(-l1:l1)
-      delta1[mi] = Δ(l1, m1, b_l, φ, θ)
-   end
-   for (mj, m2) = enumerate(-l2:l2)
-      delta2[mj] = Δ(l2, m2, b_l, φ, θ)
-   end
-   for (mj, m2) = enumerate(-l2:l2), (mi, m1) = enumerate(-l1:l1)
-      E[mi, mj] = Δ(l1, m1, b_l, φ, θ) .* Gnum(l1, l2, m1, m2, b_l, φ, θ) .* Δ(l2, m2, b_l, φ, θ)
    end
    return E
 end

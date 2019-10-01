@@ -82,7 +82,9 @@ struct SKOrbital{S}
    idx::Int         # orbital index
 end
 
-Base.String(o::SKOrbital) = "sk:" * o.str
+
+Base.String(o::SKOrbital) = "SKOrbital(" * o.str * ", $(o.idx))"
+# Base.String(o::SKOrbital) = "sk:" * o.str
 
 Base.show(io::IO, o::SKOrbital) = write(io, String(o))
 
@@ -92,9 +94,16 @@ function SKOrbital(str, idx::Integer = 0)
    return SKOrbital(Val(Symbol(str[end])), get_l(str), str, idx)
 end
 
-SKOrbital(o::SKOrbital, idx::Integer) = SKOrbital(o.valS, o.l, o.str, idx) 
+index(O::AbstractVector{<:SKOrbital}) =
+   [ SKOrbital(o.str, i) for (i, o) in enumerate(O) ]
+
 
 macro sko_str(str) SKOrbital(str) end
+
+# SKOrbital(str::AbstractString, idx::Integer) =
+#    SKOrbital(Val(str[end]), get_l(str[end]), str, idx)
+
+SKOrbital(o::SKOrbital, idx::Integer) = SKOrbital(o.valS, o.l, o.str, idx)
 
 get_l(o::SKOrbital) = o.l # get_l(o.valS)
 get_idx(o::SKOrbital) = o.idx
@@ -113,10 +122,24 @@ isless(o1::SKOrbital, o2::SKOrbital) = (
 struct SKBond{O1,O2,SYM}
    o1::SKOrbital{O1}
    o2::SKOrbital{O2}
+   idx::Int
    valSYM::Val{SYM}
 end
 
-Base.String(b::SKBond{O1,O2,SYM}) where {O1,O2,SYM} = "sk:$O1$O2$SYM"
+index(B::AbstractVector{<:SKBond}) =
+   [ SKBond(b.o1, b.o2, i, b.valSYM) for (i, b) in enumerate(B) ]
+
+Base.String(b::SKBond{O1,O2,SYM}) where {O1,O2,SYM} =
+   "SKBond($O1$O2$SYM, $(b.idx))"
+# Base.String(b::SKBond{O1,O2,SYM}) where {O1,O2,SYM} = "sk:$O1$O2$SYM"
+
+asciisym = Dict( :σ => "sigma",
+                 :π => "pi",
+                 :δ => "delta",
+                 :γ => "gamma" )
+
+strkey(b::SKBond{O1,O2,SYM}) where {O1,O2,SYM} =
+      "$(b.o1.str)-$(b.o2.str)-$(asciisym[SYM])"
 
 Base.show(io::IO, b::SKBond) = write(io, String(b))
 
@@ -136,12 +159,14 @@ function SKBond(str)
    @assert o1 in allowed_orbitals()
    @assert o2 in allowed_orbitals()
    @assert sym in allowed_bonds()
-   return SKBond(SKOrbital(String(o1)), SKOrbital(String(o2)), Val(sym))
+   return SKBond(SKOrbital(String(o1)), SKOrbital(String(o2)), 0, Val(sym))
 end
 
-function SKBond(o1::SKOrbital, o2::SKOrbital, sym::Symbol)
+
+
+function SKBond(o1::SKOrbital, o2::SKOrbital, sym::Symbol, idx=0)
    @assert sym in allowed_bonds()
-   return SKBond(o1, o2, Val(sym))
+   return SKBond(o1, o2, idx, Val(sym))
 end
 
 

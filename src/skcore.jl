@@ -29,7 +29,7 @@ struct SKH{SIGN}
    sig::Type{SIGN}
 end
 
-Base.String(H::SKH) = "sk:" * prod(String(o)[4:end] for o in H.orbitals)
+Base.String(H::SKH) = ("sk:" * prod((o.str*":") for o in H.orbitals))[1:end-1]
 
 Base.show(io::IO, H::SKH) = write(io, String(H))
 
@@ -47,20 +47,21 @@ norbitals(H::SKH) = length(H.orbitals)
 function allbonds(orbitals::Vector{<: SKOrbital})
    norb = length(orbitals)
    bonds = SKBond[]
+   idx = 0
    for i1 = 1:norb, i2 = i1:norb
       o1, o2 = orbitals[i1], orbitals[i2]
       for sym in bondtypes(o1, o2)
-         push!(bonds, SKBond(o1, o2, sym))
+         idx += 1
+         push!(bonds, SKBond(o1, o2, sym, idx))
       end
    end
-   return sort(bonds)
+   return bonds
 end
 
 
 function SKH(orbitals::AbstractVector{<: SKOrbital},
              bonds::AbstractVector{<: SKBond},
              sig = StandardSigns)
-   # check the orbitals have the correct ordering
    # construct local orbital -> index mapping
    locorbidx = Vector{Int}[]
    idx = 0
@@ -118,6 +119,36 @@ function sk2cart(H::SKH, R, V)
    println(" ")
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
       G12 = CodeGeneration.sk_gen(b, φ, θ)
+      I1 = H.locorbidx[io1]
+      I2 = H.locorbidx[io2]
+      E[I1, I2] .+= (sksign(b) * Vb) * G12
+      if io1 != io2
+         E[I2, I1] .+= sksignt(b) * Vb * G12'
+      end
+   end
+   return E
+end
+
+function sk2cart_FHIaims(H::SKH, R, V)
+   φ, θ = carttospher(R[1], R[2], R[3])
+   E = alloc_block(H)
+   for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+      G12 = CodeGeneration.sk_gen(b, φ, θ)
+      I1 = H.locorbidx[io1]
+      I2 = H.locorbidx[io2]
+      E[I1, I2] .+= (sksign(b) * Vb) * G12 .* sksignmat(b)
+      if io1 != io2
+         E[I2, I1] .+= sksignt(b) * Vb * G12' .* sksignmatt(b)
+      end
+   end
+   return E
+end
+
+function sk2cart_num(H::SKH, R, V)
+   φ, θ = carttospher(R[1], R[2], R[3])
+   E = alloc_block(H)
+   for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+      G12 = CodeGeneration.sk_num(b, φ, θ)
       I1 = H.locorbidx[io1]
       I2 = H.locorbidx[io2]
       E[I1, I2] .+= (sksign(b) * Vb) * G12

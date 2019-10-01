@@ -2,6 +2,7 @@
 module OldSK
 
 using StaticArrays, JuLIP
+using JuLIP: AbstractAtoms
 
 """
 `abstract type SKHamiltonian{NORB}` : supertype for Hamiltonian
