@@ -116,7 +116,6 @@ Hamiltonians.
 function sk2cart(H::SKH, R, V)
    φ, θ = carttospher(R[1], R[2], R[3])
    E = alloc_block(H)
-   println(" ")
    for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
       G12 = CodeGeneration.sk_gen(b, φ, θ)
       I1 = H.locorbidx[io1]
@@ -134,6 +133,34 @@ function sk2cart_FHIaims(H::SKH, R, V)
       I1 = H.locorbidx[io1]
       I2 = H.locorbidx[io2]
       E[I1, I2] .+= (sksign(b) * Vb) * G12 .* sksignmat(b)
+   end
+   return E
+end
+
+function sk2cart_onsite(H::SKH, Rlist, Vlist)
+   E = alloc_block(H)
+   for (R, V) in zip(Rlist, Vlist)
+       φ, θ = carttospher(R[1], R[2], R[3])
+       for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+           G12 = CodeGeneration.sk_gen(b, φ, θ)
+           I1 = H.locorbidx[io1]
+           I2 = H.locorbidx[io2]
+           E[I1, I2] .+= (sksign(b) * Vb) * G12
+       end
+   end
+   return E
+end
+
+function sk2cart_onsite_FHIaims(H::SKH, Rlist, Vlist)
+   E = alloc_block(H)
+   for (R, V) in zip(Rlist, Vlist)
+       φ, θ = carttospher(R[1], R[2], R[3])
+       for (b, Vb, (io1, io2)) in zip(H.bonds, V, H.b2o)
+           G12 = CodeGeneration.sk_gen(b, φ, θ)
+           I1 = H.locorbidx[io1]
+           I2 = H.locorbidx[io2]
+           E[I1, I2] .+= (sksign(b) * Vb) * G12 .* sksignmat(b)
+       end
    end
    return E
 end
