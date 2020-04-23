@@ -1,3 +1,4 @@
+![CI](https://github.com/cortner/SlaterKoster.jl/workflows/CI/badge.svg)
 
 # SlaterKoster.jl
 
