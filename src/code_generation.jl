@@ -104,7 +104,7 @@ INPUTS: l1: Angular quantum number of atom 1.
 RETURNS: This function returns the relevant coefficient that should be are used in writing the
          Slater-Koster transformations.
 """
-function Gsym(l1, l2, m1, m2, sym)
+function Gsym(l1, l2, m1, m2, mm)
 
    φ, θ = sympy.symbols("phi, theta")
 
@@ -124,12 +124,12 @@ function Gsym(l1, l2, m1, m2, sym)
    T(l, m, sym, φ, θ) = B(m, φ) * ( (-1)^sym * rot(l, abs(m),  sym, θ)
                                              - rot(l, abs(m), -sym, θ) )
 
-   if sym == 0
+   if mm == 0
       expr = (2 * A(m1, φ) * rot(l1, abs(m1), 0, θ)
                 * A(m2, φ) * rot(l2, abs(m2), 0, θ) )
    else
-      expr = (   S(l1, m1, sym, φ, θ) * S(l2, m2, sym, φ, θ)
-               + T(l1, m1, sym, φ, θ) * T(l2, m2, sym, φ, θ) )
+      expr = (   S(l1, m1, mm, φ, θ) * S(l2, m2, mm, φ, θ)
+               + T(l1, m1, mm, φ, θ) * T(l2, m2, mm, φ, θ) )
    end
 
    #expr = expr.simplify()
@@ -173,28 +173,51 @@ end
 
 tau(m) = (m >= 0) ? 1 : 0
 
-AA(m, al) = ( (m == 0) ? sqrt(2)/2 :
-            (-1)^m * (tau(m) * cos(abs(m)*al) + tau(-m) * sin(abs(m)*al)) )
+AA(m, phi) = ( (m == 0) ? sqrt(2)/2 :
+             (-1)^m * (tau(m) * cos(abs(m)*phi) + tau(-m) * sin(abs(m)*phi)) )
 
-BB(m, al) = ( (m == 0) ? 0 :
-            (-1)^m * (tau(-m) * cos(abs(m)*al) - tau(m) * sin(abs(m)*al) ) )
+BB(m, phi) = ( (m == 0) ? 0 :
+             (-1)^m * (tau(-m) * cos(abs(m)*phi) - tau(m) * sin(abs(m)*phi) ) )
 
-SS(l, m, sym, al, be) = AA(m, al) * ( (-1)^sym * small_d(l, abs(m),  sym, be)
-                                               + small_d(l, abs(m), -sym, be) )
+function small_d_rot_sym(ll, mm, pm)
+   θ = sympy.symbols("theta")
+   rot(l, m, sym) = Rotation.d(l, m, sym, θ).doit()
+   rot_ex = rot(ll, mm, pm)
+   return py2jlcode(rot_ex.__str__())
+end
 
-TT(l, m, sym, al, be) = BB(m, al) * ( (-1)^sym * small_d(l, abs(m),  sym, be)
-                                               - small_d(l, abs(m), -sym, be) )
+#@generated function small_d_rot(l, m, sym, θ)
+function small_d_rot(l, m, sym, θ)
+   expr_str = small_d_rot_sym(l, m, sym)
+   expr_str = replace(expr_str, "θ" => θ)
+   code = Meta.parse(expr_str)
+   #eval(quote
+   #   $code
+   #end)
+   eval(code)
+end
 
-function Gnum(l1, l2, m1, m2, sym, al, be)
+function d_rot(l, m, sym, θ) 
+  sd = small_d_rot(l, m, sym, θ)
+  return sd
+end
+
+SS(l, m, sym, phi, theta) = AA(m, phi) * ( (-1)^sym * d_rot(l, abs(m),  sym, theta)
+                                                    + d_rot(l, abs(m), -sym, theta) )
+
+TT(l, m, sym, phi, theta) = BB(m, phi) * ( (-1)^sym * d_rot(l, abs(m),  sym, theta)
+                                                    - d_rot(l, abs(m), -sym, theta) )
+
+function Gnum(l1, l2, m1, m2, sym, phi, theta)
   
    rtn = 0.0
 
    if sym == 0
-      rtn += (2 * AA(m1, al) * small_d(l1, abs(m1), 0, be)
-                * AA(m2, al) * small_d(l2, abs(m2), 0, be) )
+      rtn += (2 * AA(m1, phi) * d_rot(l1, abs(m1), 0, theta)
+                * AA(m2, phi) * d_rot(l2, abs(m2), 0, theta) )
    else
-      rtn += (   SS(l1, m1, sym, al, be) * SS(l2, m2, sym, al, be)
-               + TT(l1, m1, sym, al, be) * TT(l2, m2, sym, al, be) )
+      rtn += (   SS(l1, m1, sym, phi, theta) * SS(l2, m2, sym, phi, theta)
+               + TT(l1, m1, sym, phi, theta) * TT(l2, m2, sym, phi, theta) )
    end
 
    return rtn
