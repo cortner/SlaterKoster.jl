@@ -137,8 +137,8 @@ function sk2cart_FHIaims(H::SKH, R, V)
    return E
 end
 
-sk2cart(H::SKH, R, V) = sk2cart_other(H::SKH, R, V)
-sk2cart(H::SKH, R, V; FHIaims=false) = FHIaims ? sk2cart_FHIaims(H::SKH, R, V) : sk2cart(H::SKH, R, V)
+#sk2cart(H::SKH, R, V) = sk2cart_other(H::SKH, R, V)
+sk2cart(H::SKH, R, V; FHIaims=false) = FHIaims ? sk2cart_FHIaims(H::SKH, R, V) : sk2cart_other(H::SKH, R, V)
 
 function sk2cart_onsite(H::SKH, Rlist, Vlist)
    E = alloc_block(H)
@@ -168,7 +168,7 @@ function sk2cart_onsite_FHIaims(H::SKH, Rlist, Vlist)
    return E
 end
 
-sk2cart_onsite(H::SKH, R, V) = sk2cart_onsite_other(H::SKH, R, V)
+#sk2cart_onsite(H::SKH, R, V) = sk2cart_onsite_other(H::SKH, R, V)
 sk2cart_onsite(H::SKH, R, V; FHIaims=false) = FHIaims ? sk2cart_onsite_FHIaims(H::SKH, R, V) : sk2cart_onsite_other(H::SKH, R, V)
 
 function sk2cart_num_other(H::SKH, R, V)
@@ -195,7 +195,7 @@ function sk2cart_num_FHIaims(H::SKH, R, V)
    return E
 end
 
-sk2cart_num(H::SKH, R, V) = sk2cart_num_other(H::SKH, R, V)
+#sk2cart_num(H::SKH, R, V) = sk2cart_num_other(H::SKH, R, V)
 sk2cart_num(H::SKH, R, V; FHIaims=false) = FHIaims ? sk2cart_num_FHIaims(H::SKH, R, V) : sk2cart_num_other(H::SKH, R, V)
 
 """
@@ -283,5 +283,5 @@ function cart2sk_num_FHIaims(H::SKH, R, E::AbstractArray)
    return V
 end
 
-cart2sk_num(H::SKH, R, V) = cart2sk_num_other(H::SKH, R, V)
+#cart2sk_num(H::SKH, R, V) = cart2sk_num_other(H::SKH, R, V)
 cart2sk_num(H::SKH, R, V; FHIaims=false) = FHIaims ? cart2sk_num_FHIaims(H::SKH, R, V) : cart2sk_num_other(H::SKH, R, V)
