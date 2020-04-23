@@ -219,12 +219,8 @@ function cart2sk_other(H::SKH, R, E::AbstractArray)
    return V
 end
 
-function cart2sk_FHIaims(H::SKH, R, E::AbstractArray; prnt=false)
+function cart2sk_FHIaims(H::SKH, R, E::AbstractArray)
    φ, θ = carttospher(R[1], R[2], R[3])
-   if prnt
-       println("E:",E)
-       println("E':",E')
-   end
    V = zeros(length(H.bonds))
    for (I, (b, (io1, io2))) in enumerate(zip(H.bonds, H.b2o))
       G12 = CodeGeneration.sk_gen(b, φ, θ)
@@ -245,7 +241,7 @@ function cart2sk_FHIaims(H::SKH, R, E::AbstractArray; prnt=false)
 end
 
 #cart2sk(H::SKH, R, V) = cart2sk_other(H::SKH, R, V)
-cart2sk(H::SKH, R, V; FHIaims=false, prnt=false) = FHIaims ? cart2sk_FHIaims(H::SKH, R, V, prnt=prnt) : cart2sk_other(H::SKH, R, V, prnt=prnt)
+cart2sk(H::SKH, R, V; FHIaims=false) = FHIaims ? cart2sk_FHIaims(H::SKH, R, V) : cart2sk_other(H::SKH, R, V)
 
 function cart2sk_num_other(H::SKH, R, E::AbstractArray)
    φ, θ = carttospher(R[1], R[2], R[3])
