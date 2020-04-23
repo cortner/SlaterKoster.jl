@@ -1,4 +1,4 @@
-![CI](https://github.com/cortner/SlaterKoster.jl/workflows/CI/badge.svg)
+![Test](https://github.com/cortner/SlaterKoster.jl/workflows/Test/badge.svg)
 
 # SlaterKoster.jl
 
