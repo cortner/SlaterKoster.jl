@@ -228,9 +228,6 @@ function cart2sk_FHIaims(H::SKH, R, E::AbstractArray)
       I2 = H.locorbidx[io2]
       b_l = get_bidx(b) # bond symbol to L
       val = sum(sksign(b) * E[I1, I2] .* G12 .* sksignmat(b)) 
-      if prnt
-          println("I,J:",I1,I2,"  VAL: ",val," G12:",G12," sign1:",sksign(b)," sign2:",sksignmat(b))
-      end
       if b_l > 0 # for bonds other than 's' or l>0
             V[I] += 0.5 * val 
       else # for 's' bond or l=0
