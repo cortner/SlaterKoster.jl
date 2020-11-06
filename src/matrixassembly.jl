@@ -42,7 +42,9 @@ function assembleRI(at::Atoms, model::TwoCentreModel)
    Nat = length(at)
    Iat = copy(nlist.i)
    Jat = copy(nlist.j)
-   R = copy(nlist.R)
+   # R = copy(nlist.R)  # quick hack to account for changes to the
+   # neighbourlist
+   R = [ ijR[3] for ijR in pairs(nlist) ]
    V = zeros(length(R), nbonds(skh))
 
    # call the function barriers
@@ -67,7 +69,8 @@ end
 # TODO: at the moment, this is generic -> next allow SKmodel to have
 #       general diagonal blocks
 function _assembleRI_diag!(D, model::SKModel, nlist, temp)
-   for (i, j, r, R) in sites(nlist)
+   for (i, j, R) in sites(nlist)
+      r = norm.(R)
       eval_diag!(temp, model, r, R)
       D[i, :] .= temp
    end

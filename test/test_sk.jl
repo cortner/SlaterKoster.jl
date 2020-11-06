@@ -51,7 +51,7 @@ orbitals = [sko"s", sko"p", sko"d"]
 H = SKH(orbitals) # generate bonds automatically
 println(@test H == SKH("spd"))
 H = SKH("spd")
-for n = 1:5
+for n = 1:1
    V = rand(nbonds(H))
    U = rand(3) .- 0.5
    U /= norm(U)
@@ -59,7 +59,7 @@ for n = 1:5
    Hold = SK.OldSK.sk9!(U, V, zeros(9,9))
    perm = [1,3,4,2,5,6,9,7,8]
    println(@test Hnew ≈ Hold[perm, perm])
-end
+end 
 
 @info("sk2cart to cart2sk : sp")
 orbitals = [sko"s", sko"p"]
