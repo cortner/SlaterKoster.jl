@@ -6,7 +6,7 @@ import JSON, Calculus
 using StaticArrays
 
 using PyCall: pyimport
-using JuLIP: save_json
+using JuLIP: save_dict
 using SlaterKoster: max_symbol_idx
 using SlaterKoster: SKBond, get_l, get_bidx, StandardSigns, sksign, signmod
 
@@ -36,14 +36,14 @@ function small_d(l, m, mp, θ)
     fc3 = factorial(l+mp)
     fc4 = factorial(l-mp)
     fcm1 = sqrt(fc1 * fc2 * fc3 * fc4)
-  
+
     cosb = cos(θ / 2.0)
     sinb = sin(θ / 2.0)
 
     p = m - mp
     lo = max(0,p)
     hi = min(0,l+m,l-mp)
-   
+
     rtn_sum = 0.0
     for k = lo:hi
        fc5 = factorial(k)
@@ -86,7 +86,7 @@ function sk_table(L::Integer)
          tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym(l1,l2,m1,m2,sym)
       end
    end
-   save_json(filepath, tbl)
+   save_dict(filepath, tbl)
 
    # return the new table
    return tbl
@@ -197,7 +197,7 @@ function small_d_rot(l, m, sym, θ)
    eval(code)
 end
 
-function d_rot(l, m, sym, θ) 
+function d_rot(l, m, sym, θ)
   sd = small_d_rot(l, m, sym, θ)
   return sd
 end
@@ -209,7 +209,7 @@ TT(l, m, sym, phi, theta) = BB(m, phi) * ( (-1)^sym * d_rot(l, abs(m),  sym, the
                                                     - d_rot(l, abs(m), -sym, theta) )
 
 function Gnum(l1, l2, m1, m2, sym, phi, theta)
-  
+
    rtn = 0.0
 
    if sym == 0
@@ -228,7 +228,7 @@ function sk_num(::SKBond{O1, O2, SYM}, φ, θ) where {O1, O2, SYM}
    E = zeros(2*l1+1,2*l2+1)
    b_l = get_bidx(Val{SYM}())
    for (mj, m2) = enumerate(-l2:l2), (mi, m1) = enumerate(-l1:l1)
-      E[mi, mj] = Gnum(l1, l2, m1, m2, b_l, φ, θ) 
+      E[mi, mj] = Gnum(l1, l2, m1, m2, b_l, φ, θ)
    end
    return E
 end
@@ -236,7 +236,7 @@ end
 end
 
 # TODO: create in-place type-stable versions of sk_gen
-#       taking l, m as input 
+#       taking l, m as input
 # _parse_key(k) = eval(Meta.parse("[" * k * "]"))
 #
 # # generate code for sk blocks

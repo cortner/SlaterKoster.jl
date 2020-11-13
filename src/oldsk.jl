@@ -366,7 +366,9 @@ function SparseSKH(H::SKHamiltonian{NORB}, at::AbstractAtoms) where {NORB}
    bonds = zeros(nbonds(H))     # temporary array for storing the potentials
 
    # loop through sites
-   for (n, neigs, r, R) in sites(nlist)
+   # for (n, neigs, r, R) in sites(nlist)
+   for (n, neigs, R) in sites(nlist)
+      r = norm.(R)
       first[n] = idx+1          # where do the triplet entries for atom n start?
 
       # --------- on-site terms ----------
