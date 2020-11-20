@@ -6,7 +6,7 @@ import JSON, Calculus
 using StaticArrays
 
 using PyCall: pyimport
-using JuLIP: save_json
+using JuLIP: save_dict
 using SlaterKoster: max_symbol_idx
 using SlaterKoster: SKBond, get_l, get_bidx, StandardSigns, sksign, signmod
 
@@ -86,7 +86,7 @@ function sk_table(L::Integer)
          tbl[_lookupkey(l1,l2,m1,m2,sym)] = Gsym(l1,l2,m1,m2,sym)
       end
    end
-   save_json(filepath, tbl)
+   save_dict(filepath, tbl)
 
    # return the new table
    return tbl
