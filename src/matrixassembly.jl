@@ -42,7 +42,8 @@ function assembleRI(at::Atoms, model::TwoCentreModel)
    Nat = length(at)
    Iat = copy(nlist.i)
    Jat = copy(nlist.j)
-   R = copy(nlist.R)
+   # R = copy(nlist.R)
+   R = [ ijR[3] for ijR in pairs(nlist) ]
    V = zeros(length(R), nbonds(skh))
 
    # call the function barriers
