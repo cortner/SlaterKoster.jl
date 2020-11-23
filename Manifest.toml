@@ -144,9 +144,9 @@ version = "0.21.1"
 
 [[JuLIP]]
 deps = ["AlgebraicMultigrid", "Calculus", "CommonSubexpressions", "DelimitedFiles", "Dierckx", "ForwardDiff", "FunctionWrappers", "JSON", "LineSearches", "LinearAlgebra", "MacroTools", "NeighbourLists", "Optim", "Printf", "Reexport", "SparseArrays", "StaticArrays", "SuiteSparse", "Test"]
-git-tree-sha1 = "662850320338078af436734165931f75be05d9d9"
+git-tree-sha1 = "2a9bcb7006a0159194d54c9c54c2b933b77ea41d"
 uuid = "945c410c-986d-556a-acb1-167a618e0462"
-version = "0.10.2"
+version = "0.8.2"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
